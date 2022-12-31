@@ -154,3 +154,15 @@ version: 2.0.0
 # ##############################################################################################################################################################
 # Release Management
 
+Helm Version 2 vs 3
+
+
+# Helm version 2
+Helm Version 2 comes in two parts:
+Client(Helm CLI)
+Server(Tiller)
+
+- Quando o Helm v2 recebe um helm install:
+helm install <chartname>
+
+- Ele envia a requisição ao Tiller(servidor).
