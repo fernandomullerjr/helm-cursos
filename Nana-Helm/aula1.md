@@ -7,8 +7,18 @@
 
 git status
 git add .
-git commit -m "Curso monitoramento-prometheus-grafana-alertmanager - Modulo 003 - Aula  01 Métricas Latency Average e Request Count"
+git commit -m "Curso - What is Helm in Kubernetes? Helm and Helm Charts explained | Kubernetes Tutorial 23"
 eval $(ssh-agent -s)
 ssh-add /home/fernando/.ssh/chave-debian10-github
 git push
 git status
+
+
+
+
+
+# ##############################################################################################################################################################
+# ##############################################################################################################################################################
+# ##############################################################################################################################################################
+# ##############################################################################################################################################################
+# Aula 1 - What is Helm in Kubernetes? Helm and Helm Charts explained | Kubernetes Tutorial 23
