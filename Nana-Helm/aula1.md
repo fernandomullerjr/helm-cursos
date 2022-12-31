@@ -23,6 +23,12 @@ git status
 # ##############################################################################################################################################################
 # Aula 1 - What is Helm in Kubernetes? Helm and Helm Charts explained | Kubernetes Tutorial 23
 
+- Video:
+https://www.youtube.com/watch?v=-ykwb1d0DXU
+<https://www.youtube.com/watch?v=-ykwb1d0DXU>
+
+
+
 - Helm Chart é um pacote de vários YAML.
 
 
@@ -166,3 +172,26 @@ Server(Tiller)
 helm install <chartname>
 
 - Ele envia a requisição ao Tiller(servidor).
+- Tiller cria os recursos no Kubernetes, com base nos yaml recebidos.
+- O Tiller cria uma cópia das configurações, toda vez que um Deployment é criado ou alterado.
+- Cria um rastreamento de todas execuções de charts.
+- As modificações são aplicadas em Deployments existentes, ao invés de criar novos.
+- Ele lida com Rollbacks.
+
+helm install <chartname>
+helm upgrade <chartname>
+helm rollback <chartname>
+
+
+
+
+
+# ##############################################################################################################################################################
+# ##############################################################################################################################################################
+# ##############################################################################################################################################################
+# ##############################################################################################################################################################
+# Downsides of Helm
+
+- Tiller tem muito poder no cluster Kubernetes.
+- É um problema de segurança.
+- Helm v3 removeu o Tiller. Resolve o problema de segurança, mas deixa mais dificil de usar o Helm.
