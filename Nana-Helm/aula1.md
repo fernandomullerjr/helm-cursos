@@ -56,6 +56,9 @@ same applications across different environments
 
 
 # ##############################################################################################################################################################
+# ##############################################################################################################################################################
+# ##############################################################################################################################################################
+# ##############################################################################################################################################################
 # The Chart File Structure
 
 https://helm.sh/docs/topics/charts/
@@ -95,6 +98,8 @@ helm install <chartname>
 
 # Value injection into template files
 
+- O values por default, por exemplo, pode vir assim:
+
 values.yaml
 
 ~~~~yaml
@@ -104,5 +109,48 @@ version: 1.0.0
 ~~~~
 
 
-helm install –values=custom-values.yaml <chart-name> 
+- Podemos passar para o Helm usar um values personalizado, usando o comando:
+    helm install –values=custom-values.yaml <chart-name> 
 overrides the default values.yaml file and takes the inputs from the custom-values.yaml file for this install.
+
+custom-values.yaml
+
+~~~~yaml
+version: 2.0.0
+~~~~
+
+
+
+- Resultado ao usar o custom-values.yaml
+Teremos o .Values object
+
+~~~~yaml
+imageName: myapp
+port: 8080
+version: 2.0.0
+~~~~
+
+
+
+
+
+- Podemos definir valores personalizados usando a linha de comando também.
+- Usar a opção "--set" no comando helm install.
+    helm install --set port=443
+    helm install --set version=2.0.0
+
+
+
+
+
+
+
+
+
+
+# ##############################################################################################################################################################
+# ##############################################################################################################################################################
+# ##############################################################################################################################################################
+# ##############################################################################################################################################################
+# Release Management
+
