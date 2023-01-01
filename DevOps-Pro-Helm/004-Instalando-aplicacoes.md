@@ -73,10 +73,21 @@ Nesse caso ele trouxe tudo que continha ingress.
 
 
 
-4. Inspecionar
+
+
+
+
+
+
+
+
+
+
+
+4. Inspecionar o chart.
     helm inspect all ingress-nginx/ingress-nginx
 
-Ele traz as especificações sobre aquele Chart, todos os detalhes dele.
+Ele traz as especificações sobre aquele Chart, TODOS os detalhes dele.
 
 
 /home/fernando/cursos/helm-cursos/DevOps-Pro-Helm/004-saida-do-inspect.md
@@ -166,3 +177,126 @@ controller:
 
 [...]
 Restante do inspect omitido.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+5. Inspecionando apenas os Values.
+Removemos a palavra "all" do comando anterior e botamos "values":
+    helm inspect values ingress-nginx/ingress-nginx
+
+
+Agora ele traz apenas informações sobre os Values:
+
+~~~~yaml
+## nginx configuration
+## Ref: https://github.com/kubernetes/ingress-nginx/blob/main/docs/user-guide/nginx-configuration/index.md
+##
+
+## Overrides for generated resource names
+# See templates/_helpers.tpl
+# nameOverride:
+# fullnameOverride:
+
+## Labels to apply to all resources
+##
+commonLabels: {}
+# scmhash: abc123
+# myLabel: aakkmd
+
+controller:
+  name: controller
+  image:
+    ## Keep false as default for now!
+    chroot: false
+    registry: registry.k8s.io
+    image: ingress-nginx/controller
+    ## for backwards compatibility consider setting the full image url via the repository value below
+    ## use *either* current default registry/image or repository format or installing chart by providing the values.yaml will fail
+    ## repository:
+    tag: "v1.5.1"
+    digest: sha256:4ba73c697770664c1e00e9f968de14e08f606ff961c76e5d7033a4a9c593c629
+    digestChroot: sha256:c1c091b88a6c936a83bd7b098662760a87868d12452529bad0d178fb36147345
+    pullPolicy: IfNotPresent
+    # www-data -> uid 101
+    runAsUser: 101
+    allowPrivilegeEscalation: true
+
+  # -- Use an existing PSP instead of creating one
+  existingPsp: ""
+
+  # -- Configures the controller container name
+  containerName: controller
+
+  # -- Configures the ports that the nginx-controller listens on
+  containerPort:
+    http: 80
+    https: 443
+
+  # -- Will add custom configuration options to Nginx https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/configmap/
+  config: {}
+
+  # -- Annotations to be added to the controller config configuration configmap.
+  configAnnotations: {}
+
+  # -- Will add custom headers before sending traffic to backends according to https://github.com/kubernetes/ingress-nginx/tree/main/docs/examples/customization/custom-headers
+  proxySetHeaders: {}
+
+  # -- Will add custom headers before sending response traffic to the client according to: https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/configmap/#add-headers
+  addHeaders: {}
+
+  # -- Optionally customize the pod dnsConfig.
+  dnsConfig: {}
+
+  # -- Optionally customize the pod hostname.
+  hostname: {}
+
+  # -- Optionally change this to ClusterFirstWithHostNet in case you have 'hostNetwork: true'.
+  # By default, while using host network, name resolution uses the host's DNS. If you wish nginx-controller
+  # to keep resolving names inside the k8s network, use ClusterFirstWithHostNet.
+  dnsPolicy: ClusterFirst
+
+~~~~
+
+
+Aqui só consigo ver o Template, não consigo ver os valores deste arquivo.
+
+
+
+
+
+
+
+
+- Verificando o arquivo "helm-cursos/DevOps-Pro-Helm/004-saida-do-inspect-values.yaml"
+Podemos ver as opções que o Template permite.
+Como por exemplo, no Kind podemos usar Deployment ou DaemonSet, usando DaemonSet teríamos maior resiliencia, pois haveria uma cópia do ingress em cada Node.
+
+~~~~yaml
+
+  # -- Use a `DaemonSet` or `Deployment`
+  kind: Deployment
+
+~~~~
+
+
+
+
+
+
+
+6. Instalando a primeira aplicação, sem personalizar os valores, indo com tudo default por enquanto:
+    helm install meu-ingress-controller ingress-nginx/ingress-nginx
