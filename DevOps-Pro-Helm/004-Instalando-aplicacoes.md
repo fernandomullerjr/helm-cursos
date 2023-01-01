@@ -527,3 +527,73 @@ Status:
                 minikube: no errors
                 router: no errors
                 loadbalancer emulator: no errors
+
+
+
+- Após usar o tunnel, service obteve EXTERNAL-IP:
+
+~~~~bash
+
+fernando@debian10x64:~$ kubectl get all -A
+NAMESPACE     NAME                                                                  READY   STATUS    RESTARTS      AGE
+default       pod/meu-ingress-controller-ingress-nginx-controller-85685788f8slnrx   1/1     Running   0             12m
+kube-system   pod/coredns-78fcd69978-5xcpp                                          1/1     Running   0             13m
+kube-system   pod/etcd-minikube                                                     1/1     Running   13            13m
+kube-system   pod/kube-apiserver-minikube                                           1/1     Running   12            13m
+kube-system   pod/kube-controller-manager-minikube                                  1/1     Running   13            13m
+kube-system   pod/kube-proxy-5pc9k                                                  1/1     Running   0             13m
+kube-system   pod/kube-scheduler-minikube                                           1/1     Running   9             13m
+kube-system   pod/storage-provisioner                                               1/1     Running   1 (13m ago)   13m
+
+NAMESPACE     NAME                                                                TYPE           CLUSTER-IP      EXTERNAL-IP     PORT(S)                      AGE
+default       service/kubernetes                                                  ClusterIP      10.96.0.1       <none>          443/TCP                      13m
+default       service/meu-ingress-controller-ingress-nginx-controller             LoadBalancer   10.108.19.237   10.108.19.237   80:32372/TCP,443:30009/TCP   12m
+default       service/meu-ingress-controller-ingress-nginx-controller-admission   ClusterIP      10.96.51.154    <none>          443/TCP                      12m
+kube-system   service/kube-dns                                                    ClusterIP      10.96.0.10      <none>          53/UDP,53/TCP,9153/TCP       13m
+
+NAMESPACE     NAME                        DESIRED   CURRENT   READY   UP-TO-DATE   AVAILABLE   NODE SELECTOR            AGE
+kube-system   daemonset.apps/kube-proxy   1         1         1       1            1           kubernetes.io/os=linux   13m
+
+NAMESPACE     NAME                                                              READY   UP-TO-DATE   AVAILABLE   AGE
+default       deployment.apps/meu-ingress-controller-ingress-nginx-controller   1/1     1            1           12m
+kube-system   deployment.apps/coredns                                           1/1     1            1           13m
+
+NAMESPACE     NAME                                                                         DESIRED   CURRENT   READY   AGE
+default       replicaset.apps/meu-ingress-controller-ingress-nginx-controller-85685788f8   1         1         1       12m
+kube-system   replicaset.apps/coredns-78fcd69978                                           1         1         1       13m
+fernando@debian10x64:~$
+fernando@debian10x64:~$
+
+~~~~
+
+
+
+
+10.108.19.237:30009
+10.108.19.237:32372
+
+
+- Através do tunnel do Minikube o Service não ficou acessível através deste ip 10.108.19.237.
+
+- Também não funciona:
+ 192.168.92.129:30009
+ 192.168.92.129:32372
+
+- IP 10.108.19.237 só é acessível a partir da VM.
+
+- Somente assim ficou OK a exposição mesmo:
+minikube service meu-ingress-controller-ingress-nginx-controller
+
+
+
+minikube service meu-ingress-controller-ingress-nginx-controller --url
+fernando@debian10x64:~$ minikube service meu-ingress-controller-ingress-nginx-controller --url
+http://192.168.49.2:32372
+http://192.168.49.2:30009
+fernando@debian10x64:~$
+
+
+
+# PENDENTE
+- Ver maneiras de expor os Services do minikube.
+- Testar mais o tunnel, ver como expor o ip externo da VM, ao invés do ip 10.
