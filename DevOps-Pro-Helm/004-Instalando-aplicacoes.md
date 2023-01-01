@@ -300,3 +300,230 @@ Como por exemplo, no Kind podemos usar Deployment ou DaemonSet, usando DaemonSet
 
 6. Instalando a primeira aplicação, sem personalizar os valores, indo com tudo default por enquanto:
     helm install meu-ingress-controller ingress-nginx/ingress-nginx
+
+
+~~~~bash
+
+fernando@debian10x64:~$
+fernando@debian10x64:~$ helm install meu-ingress-controller ingress-nginx/ingress-nginx
+NAME: meu-ingress-controller
+LAST DEPLOYED: Sun Jan  1 12:40:22 2023
+NAMESPACE: default
+STATUS: deployed
+REVISION: 1
+TEST SUITE: None
+NOTES:
+The ingress-nginx controller has been installed.
+It may take a few minutes for the LoadBalancer IP to be available.
+You can watch the status by running 'kubectl --namespace default get services -o wide -w meu-ingress-controller-ingress-nginx-controller'
+
+An example Ingress that makes use of the controller:
+  apiVersion: networking.k8s.io/v1
+  kind: Ingress
+  metadata:
+    name: example
+    namespace: foo
+  spec:
+    ingressClassName: nginx
+    rules:
+      - host: www.example.com
+        http:
+          paths:
+            - pathType: Prefix
+              backend:
+                service:
+                  name: exampleService
+                  port:
+                    number: 80
+              path: /
+    # This section is only required if TLS is to be enabled for the Ingress
+    tls:
+      - hosts:
+        - www.example.com
+        secretName: example-tls
+
+If TLS is enabled for the Ingress, a Secret containing the certificate and key must also be provided:
+
+  apiVersion: v1
+  kind: Secret
+  metadata:
+    name: example-tls
+    namespace: foo
+  data:
+    tls.crt: <base64 encoded cert>
+    tls.key: <base64 encoded key>
+  type: kubernetes.io/tls
+fernando@debian10x64:~$
+
+~~~~
+
+
+
+
+
+~~~~bash
+
+fernando@debian10x64:~$ kubectl get all -A
+NAMESPACE     NAME                                                                  READY   STATUS    RESTARTS        AGE
+default       pod/meu-ingress-controller-ingress-nginx-controller-85685788f8slnrx   1/1     Running   0               94s
+kube-system   pod/coredns-78fcd69978-5xcpp                                          1/1     Running   0               2m48s
+kube-system   pod/etcd-minikube                                                     1/1     Running   13              2m59s
+kube-system   pod/kube-apiserver-minikube                                           1/1     Running   12              2m59s
+kube-system   pod/kube-controller-manager-minikube                                  1/1     Running   13              2m59s
+kube-system   pod/kube-proxy-5pc9k                                                  1/1     Running   0               2m48s
+kube-system   pod/kube-scheduler-minikube                                           1/1     Running   9               2m59s
+kube-system   pod/storage-provisioner                                               1/1     Running   1 (2m23s ago)   2m57s
+
+NAMESPACE     NAME                                                                TYPE           CLUSTER-IP      EXTERNAL-IP   PORT(S)                      AGE
+default       service/kubernetes                                                  ClusterIP      10.96.0.1       <none>        443/TCP                      3m5s
+default       service/meu-ingress-controller-ingress-nginx-controller             LoadBalancer   10.108.19.237   <pending>     80:32372/TCP,443:30009/TCP   95s
+default       service/meu-ingress-controller-ingress-nginx-controller-admission   ClusterIP      10.96.51.154    <none>        443/TCP                      95s
+kube-system   service/kube-dns                                                    ClusterIP      10.96.0.10      <none>        53/UDP,53/TCP,9153/TCP       3m2s
+
+NAMESPACE     NAME                        DESIRED   CURRENT   READY   UP-TO-DATE   AVAILABLE   NODE SELECTOR            AGE
+kube-system   daemonset.apps/kube-proxy   1         1         1       1            1           kubernetes.io/os=linux   3m2s
+
+NAMESPACE     NAME                                                              READY   UP-TO-DATE   AVAILABLE   AGE
+default       deployment.apps/meu-ingress-controller-ingress-nginx-controller   1/1     1            1           95s
+kube-system   deployment.apps/coredns                                           1/1     1            1           3m2s
+
+NAMESPACE     NAME                                                                         DESIRED   CURRENT   READY   AGE
+default       replicaset.apps/meu-ingress-controller-ingress-nginx-controller-85685788f8   1         1         1       94s
+kube-system   replicaset.apps/coredns-78fcd69978                                           1         1         1       2m48s
+fernando@debian10x64:~$
+
+~~~~
+
+
+
+
+
+
+
+
+- Service "EXTERNAL-IP" ficou com status <pending>.
+
+
+
+https://stackoverflow.com/questions/44110876/kubernetes-service-external-ip-pending
+<https://stackoverflow.com/questions/44110876/kubernetes-service-external-ip-pending>
+It looks like you are using a custom Kubernetes Cluster (using minikube, kubeadm or the like). In this case, there is no LoadBalancer integrated (unlike AWS or Google Cloud). With this default setup, you can only use NodePort or an Ingress Controller.
+
+With the Ingress Controller you can setup a domain name which maps to your pod; you don't need to give your Service the LoadBalancer type if you use an Ingress Controller.
+
+
+
+
+minikube service <nome-do-serviço>
+minikube service meu-ingress-controller-ingress-nginx-controller
+minikube service meu-ingress-controller-ingress-nginx-controller
+minikube service meu-ingress-controller-ingress-nginx-controller
+
+fernando@debian10x64:~$ minikube service meu-ingress-controller-ingress-nginx-controller
+|-----------|-------------------------------------------------|-------------|---------------------------|
+| NAMESPACE |                      NAME                       | TARGET PORT |            URL            |
+|-----------|-------------------------------------------------|-------------|---------------------------|
+| default   | meu-ingress-controller-ingress-nginx-controller | http/80     | http://192.168.49.2:32372 |
+|           |                                                 | https/443   | http://192.168.49.2:30009 |
+|-----------|-------------------------------------------------|-------------|---------------------------|
+* Opening service default/meu-ingress-controller-ingress-nginx-controller in default browser...
+
+
+
+
+
+http://192.168.49.2:32372/
+
+404 Not Found
+nginx
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+fernando@debian10x64:~$ kubectl describe svc meu-ingress-controller-ingress-nginx-controller
+Name:                     meu-ingress-controller-ingress-nginx-controller
+Namespace:                default
+Labels:                   app.kubernetes.io/component=controller
+                          app.kubernetes.io/instance=meu-ingress-controller
+                          app.kubernetes.io/managed-by=Helm
+                          app.kubernetes.io/name=ingress-nginx
+                          app.kubernetes.io/part-of=ingress-nginx
+                          app.kubernetes.io/version=1.5.1
+                          helm.sh/chart=ingress-nginx-4.4.2
+Annotations:              meta.helm.sh/release-name: meu-ingress-controller
+                          meta.helm.sh/release-namespace: default
+Selector:                 app.kubernetes.io/component=controller,app.kubernetes.io/instance=meu-ingress-controller,app.kubernetes.io/name=ingress-nginx
+Type:                     LoadBalancer
+IP Family Policy:         SingleStack
+IP Families:              IPv4
+IP:                       10.108.19.237
+IPs:                      10.108.19.237
+Port:                     http  80/TCP
+TargetPort:               http/TCP
+NodePort:                 http  32372/TCP
+Endpoints:                172.17.0.3:80
+Port:                     https  443/TCP
+TargetPort:               https/TCP
+NodePort:                 https  30009/TCP
+Endpoints:                172.17.0.3:443
+Session Affinity:         None
+External Traffic Policy:  Cluster
+Events:                   <none>
+fernando@debian10x64:~$
+
+
+
+
+
+- Expondo Service que do tipo LoadBalancer, que fica com EXTERNAL-IP em pending:
+  minikube service <nome-do-serviço>
+  minikube service meu-ingress-controller-ingress-nginx-controller
+
+
+
+
+
+
+- 
+
+# minikube tunnel
+
+https://minikube.sigs.k8s.io/docs/handbook/accessing/#using-minikube-tunnel
+<https://minikube.sigs.k8s.io/docs/handbook/accessing/#using-minikube-tunnel>
+
+minikube tunnel runs as a process, creating a network route on the host to the service CIDR of the cluster using the cluster’s IP address as a gateway. The tunnel command exposes the external IP directly to any program running on the host operating system.
+
+- Comando para expor ips externos para os Services do tipo LoadBalancer no minikube:
+minikube tunnel
+
+fernando@debian10x64:~$
+fernando@debian10x64:~$ minikube tunnel
+[sudo] password for fernando:
+Status:
+        machine: minikube
+        pid: 23110
+        route: 10.96.0.0/12 -> 192.168.49.2
+        minikube: Running
+        services: [meu-ingress-controller-ingress-nginx-controller]
+    errors:
+                minikube: no errors
+                router: no errors
+                loadbalancer emulator: no errors
