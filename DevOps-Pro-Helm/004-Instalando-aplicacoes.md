@@ -597,3 +597,9 @@ fernando@debian10x64:~$
 # PENDENTE
 - Ver maneiras de expor os Services do minikube.
 - Testar mais o tunnel, ver como expor o ip externo da VM, ao invés do ip 10.
+
+
+
+
+07:35
+
