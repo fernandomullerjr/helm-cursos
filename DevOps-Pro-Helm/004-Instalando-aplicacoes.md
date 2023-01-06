@@ -431,9 +431,10 @@ fernando@debian10x64:~$ minikube service meu-ingress-controller-ingress-nginx-co
 
 
 
-
+- Abrindo a página:
 http://192.168.49.2:32372/
 
+- Retorna a página do NGINX, conforme esperado, mesmo sendo o 404 neste caso:
 404 Not Found
 nginx
 
@@ -581,11 +582,17 @@ fernando@debian10x64:~$
 
 - IP 10.108.19.237 só é acessível a partir da VM.
 
+
+
+
+
 - Somente assim ficou OK a exposição mesmo:
 minikube service meu-ingress-controller-ingress-nginx-controller
 
 
 
+
+- Também não ficou ok:
 minikube service meu-ingress-controller-ingress-nginx-controller --url
 fernando@debian10x64:~$ minikube service meu-ingress-controller-ingress-nginx-controller --url
 http://192.168.49.2:32372
@@ -600,6 +607,91 @@ fernando@debian10x64:~$
 
 
 
-
+- Video continua em:
 07:35
 
+
+
+
+
+
+
+# ##############################################################################################################################################################
+# ##############################################################################################################################################################
+# ##############################################################################################################################################################
+# ##############################################################################################################################################################
+#  Dia 05/01/2023
+
+- Iniciado o Minikube.
+- Já tinha a release do ingress da aula passada.
+
+fernando@debian10x64:~$
+fernando@debian10x64:~$ helm list
+NAME                    NAMESPACE       REVISION        UPDATED                                 STATUS          CHART                   APP VERSION
+meu-ingress-controller  default         1               2023-01-01 12:40:22.579954092 -0300 -03 deployed        ingress-nginx-4.4.2     1.5.1
+fernando@debian10x64:~$
+fernando@debian10x64:~$
+fernando@debian10x64:~$ kubectl get all -A
+NAMESPACE     NAME                                                                  READY   STATUS    RESTARTS         AGE
+default       pod/meu-ingress-controller-ingress-nginx-controller-85685788f8slnrx   1/1     Running   1 (2m55s ago)    4d9h
+kube-system   pod/coredns-78fcd69978-5xcpp                                          1/1     Running   1 (2m55s ago)    4d9h
+kube-system   pod/etcd-minikube                                                     1/1     Running   14 (2m55s ago)   4d9h
+kube-system   pod/kube-apiserver-minikube                                           1/1     Running   13 (2m55s ago)   4d9h
+kube-system   pod/kube-controller-manager-minikube                                  1/1     Running   14 (2m55s ago)   4d9h
+kube-system   pod/kube-proxy-5pc9k                                                  1/1     Running   1 (2m55s ago)    4d9h
+kube-system   pod/kube-scheduler-minikube                                           1/1     Running   10 (2m55s ago)   4d9h
+kube-system   pod/storage-provisioner                                               1/1     Running   3 (79s ago)      4d9h
+
+NAMESPACE     NAME                                                                TYPE           CLUSTER-IP      EXTERNAL-IP   PORT(S)                      AGE
+default       service/kubernetes                                                  ClusterIP      10.96.0.1       <none>        443/TCP                      4d9h
+default       service/meu-ingress-controller-ingress-nginx-controller             LoadBalancer   10.108.19.237   <pending>     80:32372/TCP,443:30009/TCP   4d9h
+default       service/meu-ingress-controller-ingress-nginx-controller-admission   ClusterIP      10.96.51.154    <none>        443/TCP                      4d9h
+kube-system   service/kube-dns                                                    ClusterIP      10.96.0.10      <none>        53/UDP,53/TCP,9153/TCP       4d9h
+
+NAMESPACE     NAME                        DESIRED   CURRENT   READY   UP-TO-DATE   AVAILABLE   NODE SELECTOR            AGE
+kube-system   daemonset.apps/kube-proxy   1         1         1       1            1           kubernetes.io/os=linux   4d9h
+
+NAMESPACE     NAME                                                              READY   UP-TO-DATE   AVAILABLE   AGE
+default       deployment.apps/meu-ingress-controller-ingress-nginx-controller   1/1     1            1           4d9h
+kube-system   deployment.apps/coredns                                           1/1     1            1           4d9h
+
+NAMESPACE     NAME                                                                         DESIRED   CURRENT   READY   AGE
+default       replicaset.apps/meu-ingress-controller-ingress-nginx-controller-85685788f8   1         1         1       4d9h
+kube-system   replicaset.apps/coredns-78fcd69978                                           1         1         1       4d9h
+fernando@debian10x64:~$
+fernando@debian10x64:~$
+fernando@debian10x64:~$ date
+Thu 05 Jan 2023 09:54:19 PM -03
+fernando@debian10x64:~$
+
+
+
+
+- Expondo o Service:
+
+minikube service meu-ingress-controller-ingress-nginx-controller
+
+fernando@debian10x64:~$
+fernando@debian10x64:~$ minikube service meu-ingress-controller-ingress-nginx-controller
+|-----------|-------------------------------------------------|-------------|---------------------------|
+| NAMESPACE |                      NAME                       | TARGET PORT |            URL            |
+|-----------|-------------------------------------------------|-------------|---------------------------|
+| default   | meu-ingress-controller-ingress-nginx-controller | http/80     | http://192.168.49.2:32372 |
+|           |                                                 | https/443   | http://192.168.49.2:30009 |
+|-----------|-------------------------------------------------|-------------|---------------------------|
+* Opening service default/meu-ingress-controller-ingress-nginx-controller in default browser...
+
+
+
+
+- Este endereço só abre ao clicar no link da CLI, num Firefox atrelado a VM do VMWARE: 
+http://192.168.49.2:32372/
+
+- Não abre direto no Firefox do Notebook:
+192.168.92.129:32372
+http://192.168.92.129:32372
+
+fernando@debian10x64:~$ kubectl get nodes -o wide
+NAME       STATUS   ROLES                  AGE    VERSION   INTERNAL-IP    EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION    CONTAINER-RUNTIME
+minikube   Ready    control-plane,master   4d9h   v1.22.2   192.168.49.2   <none>        Ubuntu 20.04.2 LTS   4.19.0-17-amd64   docker://20.10.8
+fernando@debian10x64:~$
