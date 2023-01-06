@@ -695,3 +695,53 @@ fernando@debian10x64:~$ kubectl get nodes -o wide
 NAME       STATUS   ROLES                  AGE    VERSION   INTERNAL-IP    EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION    CONTAINER-RUNTIME
 minikube   Ready    control-plane,master   4d9h   v1.22.2   192.168.49.2   <none>        Ubuntu 20.04.2 LTS   4.19.0-17-amd64   docker://20.10.8
 fernando@debian10x64:~$
+
+
+
+
+
+http://192.168.49.2:32372 
+
+
+http://192.168.0.125:32372
+
+
+- Acessível somente na LAN da VM:
+
+fernando@debian10x64:~$ curl http://192.168.49.2:32372
+<html>
+<head><title>404 Not Found</title></head>
+<body>
+<center><h1>404 Not Found</h1></center>
+<hr><center>nginx</center>
+</body>
+</html>
+fernando@debian10x64:~$
+
+
+
+
+
+
+- Node do Minikube sem EXTERNAL-IP:
+
+fernando@debian10x64:~$ kubectl get nodes -o wide
+NAME       STATUS   ROLES                  AGE    VERSION   INTERNAL-IP    EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION    CONTAINER-RUNTIME
+minikube   Ready    control-plane,master   4d9h   v1.22.2   192.168.49.2   <none>        Ubuntu 20.04.2 LTS   4.19.0-17-amd64   docker://20.10.8
+fernando@debian10x64:~$
+
+
+
+
+sudo -E minikube start --driver=none
+
+
+fernando@debian10x64:~$ sudo -E minikube start --driver=none
+[sudo] password for fernando:
+* minikube v1.23.2 on Debian 10.10
+! Deleting existing cluster minikube with different driver docker due to --delete-on-failure flag set by the user.
+
+! Exiting due to GUEST_DRIVER_MISMATCH: The existing "minikube" cluster was created using the "docker" driver, which is incompatible with requested "none" driver.
+* Suggestion: Delete the existing 'minikube' cluster using: 'minikube delete', or start the existing 'minikube' cluster using: 'minikube start --driver=docker'
+
+fernando@debian10x64:~$
