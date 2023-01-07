@@ -762,3 +762,46 @@ fernando@debian10x64:~$
 
 - Definido que o expose do Service vai ser via "minikube service meu-ingress-controller-ingress-nginx-controller" mesmo, acessando 
 minikube service meu-ingress-controller-ingress-nginx-controller
+
+
+
+- Aqui verificamos que ele tá no Namespace "default":
+
+
+fernando@debian10x64:~$ kubectl get all -A
+NAMESPACE     NAME                                                                  READY   STATUS    RESTARTS       AGE
+default       pod/meu-ingress-controller-ingress-nginx-controller-85685788f8slnrx   1/1     Running   3 (23h ago)    5d9h
+kube-system   pod/coredns-78fcd69978-5xcpp                                          1/1     Running   3 (23h ago)    5d9h
+kube-system   pod/etcd-minikube                                                     1/1     Running   16 (23h ago)   5d9h
+kube-system   pod/kube-apiserver-minikube                                           1/1     Running   15 (23h ago)   5d9h
+kube-system   pod/kube-controller-manager-minikube                                  1/1     Running   16 (23h ago)   5d9h
+kube-system   pod/kube-proxy-5pc9k                                                  1/1     Running   3 (23h ago)    5d9h
+kube-system   pod/kube-scheduler-minikube                                           1/1     Running   12 (23h ago)   5d9h
+kube-system   pod/storage-provisioner                                               1/1     Running   7 (25m ago)    5d9h
+
+NAMESPACE     NAME                                                                TYPE           CLUSTER-IP      EXTERNAL-IP   PORT(S)                      AGE
+default       service/kubernetes                                                  ClusterIP      10.96.0.1       <none>        443/TCP                      5d9h
+default       service/meu-ingress-controller-ingress-nginx-controller             LoadBalancer   10.108.19.237   <pending>     80:32372/TCP,443:30009/TCP   5d9h
+default       service/meu-ingress-controller-ingress-nginx-controller-admission   ClusterIP      10.96.51.154    <none>        443/TCP                      5d9h
+kube-system   service/kube-dns                                                    ClusterIP      10.96.0.10      <none>        53/UDP,53/TCP,9153/TCP       5d9h
+
+NAMESPACE     NAME                        DESIRED   CURRENT   READY   UP-TO-DATE   AVAILABLE   NODE SELECTOR            AGE
+kube-system   daemonset.apps/kube-proxy   1         1         1       1            1           kubernetes.io/os=linux   5d9h
+
+NAMESPACE     NAME                                                              READY   UP-TO-DATE   AVAILABLE   AGE
+default       deployment.apps/meu-ingress-controller-ingress-nginx-controller   1/1     1            1           5d9h
+kube-system   deployment.apps/coredns                                           1/1     1            1           5d9h
+
+NAMESPACE     NAME                                                                         DESIRED   CURRENT   READY   AGE
+default       replicaset.apps/meu-ingress-controller-ingress-nginx-controller-85685788f8   1         1         1       5d9h
+kube-system   replicaset.apps/coredns-78fcd69978                                           1         1         1       5d9h
+fernando@debian10x64:~$
+fernando@debian10x64:~$
+fernando@debian10x64:~$ helm ls
+NAME                    NAMESPACE       REVISION        UPDATED                                 STATUS          CHART                   APP VERSION
+meu-ingress-controller  default         1               2023-01-01 12:40:22.579954092 -0300 -03 deployed        ingress-nginx-4.4.2     1.5.1
+fernando@debian10x64:~$
+
+
+
+- Vamos botar o ingress num Namespace isolado.
