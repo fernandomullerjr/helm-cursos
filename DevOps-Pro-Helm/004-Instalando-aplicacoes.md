@@ -745,3 +745,20 @@ fernando@debian10x64:~$ sudo -E minikube start --driver=none
 * Suggestion: Delete the existing 'minikube' cluster using: 'minikube delete', or start the existing 'minikube' cluster using: 'minikube start --driver=docker'
 
 fernando@debian10x64:~$
+
+
+
+
+
+
+
+
+
+# ##############################################################################################################################################################
+# ##############################################################################################################################################################
+# ##############################################################################################################################################################
+# ##############################################################################################################################################################
+#  Dia 06/01/2022
+
+- Definido que o expose do Service vai ser via "minikube service meu-ingress-controller-ingress-nginx-controller" mesmo, acessando 
+minikube service meu-ingress-controller-ingress-nginx-controller
