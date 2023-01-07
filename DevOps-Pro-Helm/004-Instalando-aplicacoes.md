@@ -804,4 +804,357 @@ fernando@debian10x64:~$
 
 
 
-- Vamos botar o ingress num Namespace isolado.
+- Vamos botar o ingress num Namespace isolado. 
+- Deixando no Namespace "default" não fica organizado.
+- Desinstalar e instalar no Namespace escolhido.
+
+- Desinstalando:
+helm uninstall meu-ingress-controller
+
+~~~~bash
+fernando@debian10x64:~$ helm uninstall meu-ingress-controller
+release "meu-ingress-controller" uninstalled
+fernando@debian10x64:~$
+fernando@debian10x64:~$
+fernando@debian10x64:~$ helm ls
+NAME    NAMESPACE       REVISION        UPDATED STATUS  CHART   APP VERSION
+fernando@debian10x64:~$
+~~~~
+
+
+
+- Verificando que agora não temos os recursos relacionados ao ingress:
+
+~~~~bash
+fernando@debian10x64:~$ kubectl get all -A
+NAMESPACE     NAME                                   READY   STATUS    RESTARTS       AGE
+kube-system   pod/coredns-78fcd69978-5xcpp           1/1     Running   3 (24h ago)    5d10h
+kube-system   pod/etcd-minikube                      1/1     Running   16 (24h ago)   5d10h
+kube-system   pod/kube-apiserver-minikube            1/1     Running   15 (24h ago)   5d10h
+kube-system   pod/kube-controller-manager-minikube   1/1     Running   16 (24h ago)   5d10h
+kube-system   pod/kube-proxy-5pc9k                   1/1     Running   3 (24h ago)    5d10h
+kube-system   pod/kube-scheduler-minikube            1/1     Running   12 (24h ago)   5d10h
+kube-system   pod/storage-provisioner                1/1     Running   7 (54m ago)    5d10h
+
+NAMESPACE     NAME                 TYPE        CLUSTER-IP   EXTERNAL-IP   PORT(S)                  AGE
+default       service/kubernetes   ClusterIP   10.96.0.1    <none>        443/TCP                  5d10h
+kube-system   service/kube-dns     ClusterIP   10.96.0.10   <none>        53/UDP,53/TCP,9153/TCP   5d10h
+
+NAMESPACE     NAME                        DESIRED   CURRENT   READY   UP-TO-DATE   AVAILABLE   NODE SELECTOR            AGE
+kube-system   daemonset.apps/kube-proxy   1         1         1       1            1           kubernetes.io/os=linux   5d10h
+
+NAMESPACE     NAME                      READY   UP-TO-DATE   AVAILABLE   AGE
+kube-system   deployment.apps/coredns   1/1     1            1           5d10h
+
+NAMESPACE     NAME                                 DESIRED   CURRENT   READY   AGE
+kube-system   replicaset.apps/coredns-78fcd69978   1         1         1       5d10h
+fernando@debian10x64:~$
+~~~~
+
+
+
+
+- Criando Namespace separado:
+kubectl create namespace nginx-ingress
+
+~~~~bash
+fernando@debian10x64:~$ kubectl create namespace nginx-ingress
+namespace/nginx-ingress created
+fernando@debian10x64:~$
+fernando@debian10x64:~$ kubectl get ns
+NAME              STATUS   AGE
+default           Active   5d10h
+kube-node-lease   Active   5d10h
+kube-public       Active   5d10h
+kube-system       Active   5d10h
+nginx-ingress     Active   4s
+fernando@debian10x64:~$
+~~~~
+
+
+
+- Instalando novamente, especificando o Namespace personalizado:
+helm install meu-ingress-controller ingress-nginx/ingress-nginx --namespace nginx-ingress
+
+~~~~bash
+fernando@debian10x64:~$ helm install meu-ingress-controller ingress-nginx/ingress-nginx --namespace nginx-ingress
+NAME: meu-ingress-controller
+LAST DEPLOYED: Fri Jan  6 22:54:24 2023
+NAMESPACE: nginx-ingress
+STATUS: deployed
+REVISION: 1
+TEST SUITE: None
+NOTES:
+The ingress-nginx controller has been installed.
+It may take a few minutes for the LoadBalancer IP to be available.
+You can watch the status by running 'kubectl --namespace nginx-ingress get services -o wide -w meu-ingress-controller-ingress-nginx-controller'
+
+An example Ingress that makes use of the controller:
+  apiVersion: networking.k8s.io/v1
+  kind: Ingress
+  metadata:
+    name: example
+    namespace: foo
+  spec:
+    ingressClassName: nginx
+    rules:
+      - host: www.example.com
+        http:
+          paths:
+            - pathType: Prefix
+              backend:
+                service:
+                  name: exampleService
+                  port:
+                    number: 80
+              path: /
+    # This section is only required if TLS is to be enabled for the Ingress
+    tls:
+      - hosts:
+        - www.example.com
+        secretName: example-tls
+
+If TLS is enabled for the Ingress, a Secret containing the certificate and key must also be provided:
+
+  apiVersion: v1
+  kind: Secret
+  metadata:
+    name: example-tls
+    namespace: foo
+  data:
+    tls.crt: <base64 encoded cert>
+    tls.key: <base64 encoded key>
+  type: kubernetes.io/tls
+fernando@debian10x64:~$
+
+fernando@debian10x64:~$ helm ls -n nginx-ingress
+NAME                    NAMESPACE       REVISION        UPDATED                                 STATUS          CHART                   APP VERSION
+meu-ingress-controller  nginx-ingress   1               2023-01-06 22:54:24.776937292 -0300 -03 deployed        ingress-nginx-4.4.2     1.5.1
+fernando@debian10x64:~$
+fernando@debian10x64:~$
+fernando@debian10x64:~$
+fernando@debian10x64:~$ helm ls -A
+NAME                    NAMESPACE       REVISION        UPDATED                                 STATUS          CHART                   APP VERSION
+meu-ingress-controller  nginx-ingress   1               2023-01-06 22:54:24.776937292 -0300 -03 deployed        ingress-nginx-4.4.2     1.5.1
+fernando@debian10x64:~$
+
+~~~~
+
+
+
+- Agora é necessário passar o namespace ao tentar listar as releases no Helm.
+
+
+
+
+
+- Verificando os recursos criados no Namespace e o URL para acesso:
+
+~~~~bash
+fernando@debian10x64:~$ kubectl get all -n nginx-ingress
+NAME                                                                  READY   STATUS    RESTARTS   AGE
+pod/meu-ingress-controller-ingress-nginx-controller-85685788f82hp89   1/1     Running   0          6m7s
+
+NAME                                                                TYPE           CLUSTER-IP       EXTERNAL-IP   PORT(S)                      AGE
+service/meu-ingress-controller-ingress-nginx-controller             LoadBalancer   10.109.154.35    <pending>     80:30078/TCP,443:31591/TCP   6m7s
+service/meu-ingress-controller-ingress-nginx-controller-admission   ClusterIP      10.111.105.194   <none>        443/TCP                      6m7s
+
+NAME                                                              READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/meu-ingress-controller-ingress-nginx-controller   1/1     1            1           6m7s
+
+NAME                                                                         DESIRED   CURRENT   READY   AGE
+replicaset.apps/meu-ingress-controller-ingress-nginx-controller-85685788f8   1         1         1       6m7s
+fernando@debian10x64:~$
+
+fernando@debian10x64:~$ minikube service list
+|---------------|-----------------------------------------------------------|--------------|---------------------------|
+|   NAMESPACE   |                           NAME                            | TARGET PORT  |            URL            |
+|---------------|-----------------------------------------------------------|--------------|---------------------------|
+| default       | kubernetes                                                | No node port |
+| kube-system   | kube-dns                                                  | No node port |
+| nginx-ingress | meu-ingress-controller-ingress-nginx-controller           | http/80      | http://192.168.49.2:30078 |
+|               |                                                           | https/443    | http://192.168.49.2:31591 |
+| nginx-ingress | meu-ingress-controller-ingress-nginx-controller-admission | No node port |
+|---------------|-----------------------------------------------------------|--------------|---------------------------|
+fernando@debian10x64:~$
+~~~~
+
+
+
+- Acessando, ficou ok:
+<http://192.168.49.2:30078>
+404 Not Found
+nginx
+
+
+
+
+- Atualmente nosso Pod tem só 1 replica.
+- Vamos adicionar redundancia, 
+
+- Verificando nosso arquivo de Values:
+helm-cursos/DevOps-Pro-Helm/004-saida-do-inspect-values.yaml
+
+Temos um campo que diz a quantidade de replicas, é o campo "replicaCount":
+
+~~~~yaml
+  replicaCount: 1
+~~~~
+
+
+
+- Vamos modificar via Values.
+- Alterar para 2 o replicaCount:
+
+/home/fernando/cursos/helm-cursos/DevOps-Pro-Helm/004-saida-do-inspect-values.yaml
+
+~~~~yaml
+  replicaCount: 2
+~~~~
+
+
+
+
+
+- Como iremos usar somente o  replicaCount, por enquanto, vamos limpar o arquivo de Values, deixando só este campo personalizado mesmo:
+
+/home/fernando/cursos/helm-cursos/DevOps-Pro-Helm/004-saida-do-inspect-values.yaml
+
+~~~~yaml
+## nginx configuration
+## Ref: https://github.com/kubernetes/ingress-nginx/blob/main/docs/user-guide/nginx-configuration/index.md
+##
+
+controller:
+
+  replicaCount: 2
+~~~~
+
+
+
+
+- Agora para atualizar, irei utilizar o comando helm upgrade.
+
+helm upgrade meu-ingress-controller ingress-nginx/ingress-nginx --namespace nginx-ingress --values /home/fernando/cursos/helm-cursos/DevOps-Pro-Helm/004-saida-do-inspect-values.yaml
+
+~~~~bash
+fernando@debian10x64:~$
+fernando@debian10x64:~$ helm upgrade meu-ingress-controller ingress-nginx/ingress-nginx --namespace nginx-ingress --values /home/fernando/cursos/helm-cursos/DevOps-Pro-Helm/004-saida-do-inspect-values.yaml
+Release "meu-ingress-controller" has been upgraded. Happy Helming!
+NAME: meu-ingress-controller
+LAST DEPLOYED: Fri Jan  6 23:18:51 2023
+NAMESPACE: nginx-ingress
+STATUS: deployed
+REVISION: 2
+TEST SUITE: None
+NOTES:
+The ingress-nginx controller has been installed.
+It may take a few minutes for the LoadBalancer IP to be available.
+[...]
+
+
+fernando@debian10x64:~$ helm ls -A
+NAME                    NAMESPACE       REVISION        UPDATED                                 STATUS          CHART                   APP VERSION
+meu-ingress-controller  nginx-ingress   2               2023-01-06 23:18:51.783310368 -0300 -03 deployed        ingress-nginx-4.4.2     1.5.1
+fernando@debian10x64:~$
+
+~~~~
+
+
+
+
+
+
+- Agora escalou para 2 Pods, conforme nosso values.yaml:
+
+~~~~bash
+
+fernando@debian10x64:~$ kubectl get all -n nginx-ingress
+NAME                                                                  READY   STATUS    RESTARTS   AGE
+pod/meu-ingress-controller-ingress-nginx-controller-85685788f82hp89   1/1     Running   0          26m
+pod/meu-ingress-controller-ingress-nginx-controller-85685788f868bbf   1/1     Running   0          2m16s
+
+NAME                                                                TYPE           CLUSTER-IP       EXTERNAL-IP   PORT(S)                      AGE
+service/meu-ingress-controller-ingress-nginx-controller             LoadBalancer   10.109.154.35    <pending>     80:30078/TCP,443:31591/TCP   26m
+service/meu-ingress-controller-ingress-nginx-controller-admission   ClusterIP      10.111.105.194   <none>        443/TCP                      26m
+
+NAME                                                              READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/meu-ingress-controller-ingress-nginx-controller   2/2     2            2           26m
+
+NAME                                                                         DESIRED   CURRENT   READY   AGE
+replicaset.apps/meu-ingress-controller-ingress-nginx-controller-85685788f8   2         2         2       26m
+fernando@debian10x64:~$
+
+~~~~
+
+
+
+
+
+- Verificando histórico de releases:
+helm history meu-ingress-controller --namespace nginx-ingress
+
+~~~~bash
+
+fernando@debian10x64:~$ helm history meu-ingress-controller --namespace nginx-ingress
+REVISION        UPDATED                         STATUS          CHART                   APP VERSION     DESCRIPTION
+1               Fri Jan  6 22:54:24 2023        superseded      ingress-nginx-4.4.2     1.5.1           Install complete
+2               Fri Jan  6 23:18:51 2023        deployed        ingress-nginx-4.4.2     1.5.1           Upgrade complete
+fernando@debian10x64:~$
+
+~~~~
+
+
+
+
+
+- No Helm temos o comando rollback, que retorna para versão anterior:
+helm rollback meu-ingress-controller --namespace nginx-ingress
+
+~~~~bash
+
+fernando@debian10x64:~$ helm rollback meu-ingress-controller --namespace nginx-ingress
+Rollback was a success! Happy Helming!
+fernando@debian10x64:~$
+fernando@debian10x64:~$
+fernando@debian10x64:~$ helm history meu-ingress-controller --namespace nginx-ingress
+REVISION        UPDATED                         STATUS          CHART                   APP VERSION     DESCRIPTION
+1               Fri Jan  6 22:54:24 2023        superseded      ingress-nginx-4.4.2     1.5.1           Install complete
+2               Fri Jan  6 23:18:51 2023        superseded      ingress-nginx-4.4.2     1.5.1           Upgrade complete
+3               Fri Jan  6 23:24:31 2023        deployed        ingress-nginx-4.4.2     1.5.1           Rollback to 1
+fernando@debian10x64:~$
+fernando@debian10x64:~$
+fernando@debian10x64:~$
+fernando@debian10x64:~$ kubectl get all -n nginx-ingress
+NAME                                                                  READY   STATUS        RESTARTS   AGE
+pod/meu-ingress-controller-ingress-nginx-controller-85685788f82hp89   1/1     Running       0          30m
+pod/meu-ingress-controller-ingress-nginx-controller-85685788f868bbf   1/1     Terminating   0          5m46s
+
+NAME                                                                TYPE           CLUSTER-IP       EXTERNAL-IP   PORT(S)                      AGE
+service/meu-ingress-controller-ingress-nginx-controller             LoadBalancer   10.109.154.35    <pending>     80:30078/TCP,443:31591/TCP   30m
+service/meu-ingress-controller-ingress-nginx-controller-admission   ClusterIP      10.111.105.194   <none>        443/TCP                      30m
+
+NAME                                                              READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/meu-ingress-controller-ingress-nginx-controller   1/1     1            1           30m
+
+NAME                                                                         DESIRED   CURRENT   READY   AGE
+replicaset.apps/meu-ingress-controller-ingress-nginx-controller-85685788f8   1         1         1       30m
+fernando@debian10x64:~$
+fernando@debian10x64:~$
+fernando@debian10x64:~$
+fernando@debian10x64:~$ kubectl get all -n nginx-ingress
+NAME                                                                  READY   STATUS    RESTARTS   AGE
+pod/meu-ingress-controller-ingress-nginx-controller-85685788f82hp89   1/1     Running   0          30m
+
+NAME                                                                TYPE           CLUSTER-IP       EXTERNAL-IP   PORT(S)                      AGE
+service/meu-ingress-controller-ingress-nginx-controller             LoadBalancer   10.109.154.35    <pending>     80:30078/TCP,443:31591/TCP   30m
+service/meu-ingress-controller-ingress-nginx-controller-admission   ClusterIP      10.111.105.194   <none>        443/TCP                      30m
+
+NAME                                                              READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/meu-ingress-controller-ingress-nginx-controller   1/1     1            1           30m
+
+NAME                                                                         DESIRED   CURRENT   READY   AGE
+replicaset.apps/meu-ingress-controller-ingress-nginx-controller-85685788f8   1         1         1       30m
+fernando@debian10x64:~$
+
+~~~~
