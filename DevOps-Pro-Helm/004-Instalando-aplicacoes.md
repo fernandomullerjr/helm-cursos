@@ -1158,3 +1158,121 @@ replicaset.apps/meu-ingress-controller-ingress-nginx-controller-85685788f8   1  
 fernando@debian10x64:~$
 
 ~~~~
+
+
+
+
+
+
+
+
+
+
+- Agora para atualizar utilizando o set, .
+helm upgrade meu-ingress-controller ingress-nginx/ingress-nginx --namespace nginx-ingress --set controller.replicaCount=3
+
+~~~~bash
+
+fernando@debian10x64:~$ helm upgrade meu-ingress-controller ingress-nginx/ingress-nginx --namespace nginx-ingress --set controller.replicaCount=3
+Release "meu-ingress-controller" has been upgraded. Happy Helming!
+NAME: meu-ingress-controller
+LAST DEPLOYED: Fri Jan  6 23:39:04 2023
+NAMESPACE: nginx-ingress
+STATUS: deployed
+REVISION: 4
+TEST SUITE: None
+NOTES:
+The ingress-nginx controller has been installed.
+It may take a few minutes for the LoadBalancer IP to be available.
+
+
+
+fernando@debian10x64:~$ helm ls -A
+NAME                    NAMESPACE       REVISION        UPDATED                                 STATUS          CHART                   APP VERSION
+meu-ingress-controller  nginx-ingress   4               2023-01-06 23:39:04.263610761 -0300 -03 deployed        ingress-nginx-4.4.2     1.5.1
+fernando@debian10x64:~$
+fernando@debian10x64:~$
+
+
+fernando@debian10x64:~$ kubectl get all -n nginx-ingress
+NAME                                                                  READY   STATUS    RESTARTS   AGE
+pod/meu-ingress-controller-ingress-nginx-controller-85685788f82bj9g   1/1     Running   0          30s
+pod/meu-ingress-controller-ingress-nginx-controller-85685788f82hp89   1/1     Running   0          45m
+pod/meu-ingress-controller-ingress-nginx-controller-85685788f8xpg5v   1/1     Running   0          30s
+
+NAME                                                                TYPE           CLUSTER-IP       EXTERNAL-IP   PORT(S)                      AGE
+service/meu-ingress-controller-ingress-nginx-controller             LoadBalancer   10.109.154.35    <pending>     80:30078/TCP,443:31591/TCP   45m
+service/meu-ingress-controller-ingress-nginx-controller-admission   ClusterIP      10.111.105.194   <none>        443/TCP                      45m
+
+NAME                                                              READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/meu-ingress-controller-ingress-nginx-controller   3/3     3            3           45m
+
+NAME                                                                         DESIRED   CURRENT   READY   AGE
+replicaset.apps/meu-ingress-controller-ingress-nginx-controller-85685788f8   3         3         3       45m
+fernando@debian10x64:~$
+
+~~~~
+
+- Escalou para 3 replicas.
+- Foi para o revision 4.
+
+helm history meu-ingress-controller --namespace nginx-ingress
+
+~~~~bash
+
+fernando@debian10x64:~$ helm history meu-ingress-controller --namespace nginx-ingress
+REVISION        UPDATED                         STATUS          CHART                   APP VERSION     DESCRIPTION
+1               Fri Jan  6 22:54:24 2023        superseded      ingress-nginx-4.4.2     1.5.1           Install complete
+2               Fri Jan  6 23:18:51 2023        superseded      ingress-nginx-4.4.2     1.5.1           Upgrade complete
+3               Fri Jan  6 23:24:31 2023        superseded      ingress-nginx-4.4.2     1.5.1           Rollback to 1
+4               Fri Jan  6 23:39:04 2023        deployed        ingress-nginx-4.4.2     1.5.1           Upgrade complete
+fernando@debian10x64:~$
+
+~~~~
+
+
+
+- O Set tem maior valor entre o upgrade usando values e o valor default setado.
+
+- Pesos:
+1. Set
+2. Values
+3. Values Default
+
+
+
+
+- Rollback para uma Revision especifica, voltando para o Revision 2, onde tinha 2 Pods de replicas:
+helm rollback meu-ingress-controller 2 --namespace nginx-ingress
+
+voltando para revision que tinha 2 replicas:
+
+~~~~bash
+fernando@debian10x64:~$ helm rollback meu-ingress-controller 2 --namespace nginx-ingress
+Rollback was a success! Happy Helming!
+fernando@debian10x64:~$
+fernando@debian10x64:~$ helm history meu-ingress-controller --namespace nginx-ingress
+REVISION        UPDATED                         STATUS          CHART                   APP VERSION     DESCRIPTION
+1               Fri Jan  6 22:54:24 2023        superseded      ingress-nginx-4.4.2     1.5.1           Install complete
+2               Fri Jan  6 23:18:51 2023        superseded      ingress-nginx-4.4.2     1.5.1           Upgrade complete
+3               Fri Jan  6 23:24:31 2023        superseded      ingress-nginx-4.4.2     1.5.1           Rollback to 1
+4               Fri Jan  6 23:39:04 2023        superseded      ingress-nginx-4.4.2     1.5.1           Upgrade complete
+5               Fri Jan  6 23:54:51 2023        deployed        ingress-nginx-4.4.2     1.5.1           Rollback to 2
+fernando@debian10x64:~$
+fernando@debian10x64:~$ kubectl get all -n nginx-ingress
+NAME                                                                  READY   STATUS        RESTARTS   AGE
+pod/meu-ingress-controller-ingress-nginx-controller-85685788f82bj9g   1/1     Terminating   0          15m
+pod/meu-ingress-controller-ingress-nginx-controller-85685788f82hp89   1/1     Running       0          60m
+pod/meu-ingress-controller-ingress-nginx-controller-85685788f8xpg5v   1/1     Running       0          15m
+
+NAME                                                                TYPE           CLUSTER-IP       EXTERNAL-IP   PORT(S)                      AGE
+service/meu-ingress-controller-ingress-nginx-controller             LoadBalancer   10.109.154.35    <pending>     80:30078/TCP,443:31591/TCP   60m
+service/meu-ingress-controller-ingress-nginx-controller-admission   ClusterIP      10.111.105.194   <none>        443/TCP                      60m
+
+NAME                                                              READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/meu-ingress-controller-ingress-nginx-controller   2/2     2            2           60m
+
+NAME                                                                         DESIRED   CURRENT   READY   AGE
+replicaset.apps/meu-ingress-controller-ingress-nginx-controller-85685788f8   2         2         2       60m
+fernando@debian10x64:~$
+~~~~
