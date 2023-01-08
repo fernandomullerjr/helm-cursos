@@ -1243,6 +1243,7 @@ fernando@debian10x64:~$
 
 
 - Rollback para uma Revision especifica, voltando para o Revision 2, onde tinha 2 Pods de replicas:
+helm rollback <nome-do-chart> <numero-do-revision> --namespace nginx-ingress
 helm rollback meu-ingress-controller 2 --namespace nginx-ingress
 
 voltando para revision que tinha 2 replicas:
