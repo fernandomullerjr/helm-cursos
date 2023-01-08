@@ -27,3 +27,9 @@ git status
 api-produto
 
 
+helm create api-produto
+
+
+
+# PENDENTE
+- Ver retorno do Fabricio sobre manifestos do k8s usados no video da aula.
