@@ -136,3 +136,65 @@ alterando para:
 
 - Documentação:
 <https://helm.sh/docs/chart_template_guide/builtin_objects/>
+
+
+- Vamos ajustar também o "matchLabels", pela mesma idéia. Pois teremos várias releases, daí elas podem conflitar, se estiverem iguais.
+
+
+
+- Atualmente o valor da tag da imagem Docker utilizada é fixo, iremos colocar somente a tag dinâmica, visto que é um valor que se altera com frequência:
+ANTES:
+~~~~yaml
+        image: mongo:4.2.8
+~~~~
+
+
+- No Deployment do Template, colocamos objetos do Values:
+DEPOIS:
+~~~~yaml
+        image: mongo:{{ .Values.mongodb.tag }}
+~~~~
+
+- No arquivo values.yaml, precisamos montar a estrutura abaixo:
+
+~~~~yaml
+mongodb:
+  tag: 4.2.8
+~~~~
+
+
+
+
+
+
+- ANTES:
+
+~~~~yaml
+        env:        
+          - name: MONGO_INITDB_ROOT_USERNAME
+            value: mongouser
+          - name: MONGO_INITDB_ROOT_PASSWORD
+            value: mongopwd
+~~~~
+
+
+- DEPOIS:
+
+~~~~yaml
+        env:        
+          - name: MONGO_INITDB_ROOT_USERNAME
+            value: {{ .Values.mongodb.credentials.userName }}
+          - name: MONGO_INITDB_ROOT_PASSWORD
+            value: {{ .Values.mongodb.credentials.userPassword }}
+~~~~
+
+
+- No arquivo values.yaml, precisamos montar a estrutura abaixo, colocando os campos de credentials:
+
+~~~~yaml
+mongodb:
+  tag: 4.2.8
+  credentials:
+    userName: mongouser
+    userPassword: mongopwd
+~~~~

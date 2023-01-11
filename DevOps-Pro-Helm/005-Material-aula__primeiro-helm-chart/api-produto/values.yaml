@@ -1,0 +1,5 @@
+mongodb:
+  tag: 4.2.8
+  credentials:
+    userName: mongouser
+    userPassword: mongopwd
