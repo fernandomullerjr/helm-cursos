@@ -125,6 +125,8 @@ DevOps-Pro-Helm/005-Material-aula__primeiro-helm-chart/api-produto/templates
 
 [02:33]
 
+## Mongo Deployment
+
 - Iremos começar pelo Deployment do Mongo:
 /home/fernando/cursos/helm-cursos/DevOps-Pro-Helm/005-Material-aula__primeiro-helm-chart/api-produto/templates/mongodb-deployment.yaml
 
@@ -198,3 +200,96 @@ mongodb:
     userName: mongouser
     userPassword: mongopwd
 ~~~~
+
+
+
+- Resultado final do Deployment do Mongo:
+
+~~~~yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-mongodb-deployment
+spec:
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-mongodb
+  template:
+    metadata:     
+      labels:
+        app: {{ .Release.Name }}-mongodb
+    spec:
+      containers:
+      - name: mongodb
+        image: mongo:{{ .Values.mongodb.tag }}
+        ports:
+        - containerPort: 27017
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "1500m"
+          limits:
+            memory: "1Gi"
+            cpu: "1500m"
+        env:        
+          - name: MONGO_INITDB_ROOT_USERNAME
+            value: {{ .Values.mongodb.credentials.userName }}
+          - name: MONGO_INITDB_ROOT_PASSWORD
+            value: {{ .Values.mongodb.credentials.userPassword }}
+~~~~
+
+
+
+
+
+
+## Mongo Service
+
+- Agora vamos ajustar o Service do Mongo:
+/home/fernando/cursos/helm-cursos/DevOps-Pro-Helm/005-Material-aula__primeiro-helm-chart/api-produto/templates/mongodb-service.yaml
+
+- Atualmente ele está assim:
+
+~~~~yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongo-service
+spec:
+  selector:
+    app: mongodb
+  ports:
+  - port: 27017
+    targetPort: 27017
+~~~~
+
+
+- Vamos ajustar o name, para que seja dinâmico.
+- Iremos usar o nome da Release, que nem fizemos para o Deployment do Mongo.
+    {{ .Release.Name }}-
+
+
+- DEPOIS:
+
+~~~~yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-mongo-service
+spec:
+  selector:
+    app: {{ .Release.Name }}-mongodb
+  ports:
+  - port: 27017
+    targetPort: 27017
+~~~~
+
+
+
+
+
+## API Deployment
+
+[09:41]
+
+- Ajustar o Deployment da API
