@@ -13,3 +13,6 @@ helm upgrade meu-ingress-controller ingress-nginx/ingress-nginx --namespace ngin
 helm history meu-ingress-controller --namespace nginx-ingress	Verificando histórico de releases:
 helm rollback meu-ingress-controller --namespace nginx-ingress	Retorna para versão anterior(quando não é especificado o revision ele volta para o último).
 helm rollback meu-ingress-controller 2 --namespace nginx-ingress	Rollback para Revision especifica
+
+
+
