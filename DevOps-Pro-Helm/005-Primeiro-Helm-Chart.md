@@ -496,3 +496,35 @@ mongodb:
 
 
 - Como não estamos usando o Chart num repositório git ainda, iremos apontar para a pasta.
+
+- Pasta contendo os manifestos originais:
+  /home/fernando/cursos/helm-cursos/DevOps-Pro-Helm/005-Material-aula__primeiro-helm-chart
+
+- Pasta contendo os arquivos para o Helm, chart "api-produto":
+  /home/fernando/cursos/helm-cursos/DevOps-Pro-Helm/005-Material-aula__primeiro-helm-chart/api-produto
+
+cd /home/fernando/cursos/helm-cursos/DevOps-Pro-Helm/005-Material-aula__primeiro-helm-chart/api-produto
+
+fernando@debian10x64:~/cursos/helm-cursos/DevOps-Pro-Helm/005-Material-aula__primeiro-helm-chart/api-produto$ ls -lhasp
+total 28K
+4.0K drwxr-xr-x 4 fernando fernando 4.0K Jan 10 21:58 ./
+4.0K drwxr-xr-x 3 fernando fernando 4.0K Jan 10 22:05 ../
+4.0K drwxr-xr-x 2 fernando fernando 4.0K Jan 10 21:58 charts/
+4.0K -rw-r--r-- 1 fernando fernando 1.2K Jan 10 21:58 Chart.yaml
+4.0K -rw-r--r-- 1 fernando fernando  349 Jan 10 21:58 .helmignore
+4.0K drwxr-xr-x 2 fernando fernando 4.0K Jan 10 22:05 templates/
+4.0K -rw-r--r-- 1 fernando fernando  189 Jan 13 22:00 values.yaml
+fernando@debian10x64:~/cursos/helm-cursos/DevOps-Pro-Helm/005-Material-aula__primeiro-helm-chart/api-produto$
+
+
+
+
+- Comando para instalar o Chart:
+helm install minhaapi /home/fernando/cursos/helm-cursos/DevOps-Pro-Helm/005-Material-aula__primeiro-helm-chart/api-produto
+
+
+
+- Comando para instalar o Chart:
+helm install minhaapi /home/fernando/cursos/helm-cursos/DevOps-Pro-Helm/005-Material-aula__primeiro-helm-chart/api-produto --dry-run --debug
+
+/home/fernando/cursos/helm-cursos/DevOps-Pro-Helm/005-dry-run-chart.yaml
