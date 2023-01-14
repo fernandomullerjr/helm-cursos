@@ -769,3 +769,56 @@ helm uninstall minhaapi
 - Instalando usando o parametro --wait, onde ele vai esperar que ocorra toda a instalação e que tudo esteja disponível, para depois liberar o cursor:
 helm install minhaapi /home/fernando/cursos/helm-cursos/DevOps-Pro-Helm/005-Material-aula__primeiro-helm-chart/api-produto --wait
 
+
+
+
+
+- Testando acesso ao serviço
+minikube service minhaapi-api-service
+
+
+fernando@debian10x64:~$ minikube service minhaapi-api-service
+|-----------|----------------------|-------------|---------------------------|
+| NAMESPACE |         NAME         | TARGET PORT |            URL            |
+|-----------|----------------------|-------------|---------------------------|
+| default   | minhaapi-api-service |          80 | http://192.168.49.2:32138 |
+|-----------|----------------------|-------------|---------------------------|
+* Opening service default/minhaapi-api-service in default browser...
+
+
+- Abriu:
+http://192.168.49.2:32138/swagger/index.html
+
+
+- Testando o SWAGGER:
+
+~~~~bash
+GET
+​/Produto
+Parameters
+
+No parameters
+Responses
+Code	Description	Links
+200	
+
+Success
+Media type
+Controls Accept header.
+
+    Example Value
+    Schema
+
+[
+  {
+    "id": "string",
+    "nome": "string",
+    "preco": 0,
+    "categoria": "string"
+  }
+]
+~~~~
+
+
+
+Funcionando!
