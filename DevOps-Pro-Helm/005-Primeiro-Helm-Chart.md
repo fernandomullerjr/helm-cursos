@@ -293,3 +293,206 @@ spec:
 [09:41]
 
 - Ajustar o Deployment da API
+
+
+
+- API tava sem os Requests e Limits, ajustei:
+
+~~~~yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-deployment
+spec:
+  selector:
+    matchLabels:
+      app: api
+  template:
+    metadata:
+      labels:
+        app: api
+    spec:
+      containers:
+      - name: api
+        image: fabricioveronez/pedelogo-catalogo:v1
+        ports:
+        - containerPort: 80
+        imagePullPolicy: Always
+        resources:
+          requests:
+            memory: "32Mi"
+            cpu: "500m"
+          limits:
+            memory: "64Mi"
+            cpu: "500m"
+        env:
+          - name: Mongo__User
+            value: mongouser
+          - name: Mongo__Password
+            value: mongopwd
+          - name: Mongo__Host
+            value: mongo-service
+          - name: Mongo__DataBase
+            value: admin
+
+~~~~
+
+
+
+- Vamos editar o Deployment da API.
+adicionar o release name na frente de alguns nomes
+{{ .Release.Name }}-
+
+
+- No campo da imagem do container, mudar:
+DE:
+        image: fabricioveronez/pedelogo-catalogo:v1
+PARA:
+        image: {{ .Values.api.image }}
+
+
+
+- No arquivo values.yaml, precisamos montar a estrutura abaixo, colocando os campos sobre API:
+
+~~~~yaml
+api:
+  image: fabricioveronez/pedelogo-catalogo:v1
+
+mongodb:
+  tag: 4.2.8
+  credentials:
+    userName: mongouser
+    userPassword: mongopwd
+~~~~
+
+
+
+
+- Nos campos das variáveis de ambiente, substituir alguns campos por:
+            value: {{ .Values.mongodb.credentials.userName }}
+            value: {{ .Values.mongodb.credentials.userPassword }}
+                  {{ .Release.Name }}-mongo-service
+ nome do banco, também usar valores do Values
+ {{ .Values.mongodb.databaseName }}
+
+
+- Ajustar o values.yaml novamente, adicionando o nome do database:
+
+~~~~yaml
+api:
+  image: fabricioveronez/pedelogo-catalogo:v1
+
+mongodb:
+  tag: 4.2.8
+  credentials:
+    userName: mongouser
+    userPassword: mongopwd
+  databaseName: admin
+~~~~
+
+
+
+- Deployment da API ajustado:
+
+/home/fernando/cursos/helm-cursos/DevOps-Pro-Helm/005-Material-aula__primeiro-helm-chart/api-produto/templates/api-deployment.yaml
+
+~~~~yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-api-deployment
+spec:
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-api
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-api
+    spec:
+      containers:
+      - name: api
+        image: {{ .Values.api.image }}
+        ports:
+        - containerPort: 80
+        imagePullPolicy: Always
+        resources:
+          requests:
+            memory: "32Mi"
+            cpu: "500m"
+          limits:
+            memory: "64Mi"
+            cpu: "500m"
+        env:
+          - name: Mongo__User
+            value: {{ .Values.mongodb.credentials.userName }}
+          - name: Mongo__Password
+            value: {{ .Values.mongodb.credentials.userPassword }}
+          - name: Mongo__Host
+            value: {{ .Release.Name }}-mongo-service
+          - name: Mongo__DataBase
+            value: {{ .Values.mongodb.databaseName }}
+~~~~
+
+
+
+
+- Ajustar o Service da API agora.
+- Manifesto do Service API antes:
+
+ANTES
+
+~~~~yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-service
+spec:
+  selector:
+    app: api
+  ports:
+  - port: 80
+    targetPort: 80
+  type: LoadBalancer
+~~~~
+
+
+
+- DEPOIS:
+
+~~~~yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-api-service
+spec:
+  selector:
+    app: {{ .Release.Name }}-api
+  ports:
+  - port: 80
+    targetPort: 80
+  type: {{ .Values.api.serviceType }}
+~~~~
+
+
+
+- Ajustado o arquivo values.yaml:
+
+~~~~yaml
+api:
+  image: fabricioveronez/pedelogo-catalogo:v1
+  serviceType: LoadBalancer
+
+mongodb:
+  tag: 4.2.8
+  credentials:
+    userName: mongouser
+    userPassword: mongopwd
+  databaseName: admin
+~~~~
+
+
+
+
+
+- Como não estamos usando o Chart num repositório git ainda, iremos apontar para a pasta.
