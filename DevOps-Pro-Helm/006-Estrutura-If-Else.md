@@ -424,9 +424,10 @@ data:
 helm upgrade minhaapi /home/fernando/cursos/helm-cursos/DevOps-Pro-Helm/005-Material-aula__primeiro-helm-chart/api-produto --dry-run --debug
 
 - Funcionou, pt2, agora gerou todos os manifestos e encodou as Secrets em base64, conforme o esperado:
+  MONGO_INITDB_ROOT_USERNAME: "bW9uZ291c2Vy"
+  MONGO_INITDB_ROOT_PASSWORD: "bW9uZ29wd2Q="
 
 ~~~~bash
-
 fernando@debian10x64:~/cursos/helm-cursos/DevOps-Pro-Helm/005-Material-aula__primeiro-helm-chart/api-produto$ helm upgrade minhaapi /home/fernando/cursos/helm-cursos/DevOps-Pro-Helm/005-Material-aula__primeiro-helm-chart/api-produto --dry-run --debug
 upgrade.go:142: [debug] preparing upgrade for minhaapi
 upgrade.go:150: [debug] performing update for minhaapi
@@ -576,3 +577,69 @@ ssh-add /home/fernando/.ssh/chave-debian10-github
 git push
 git status
 
+
+
+
+
+- Agora precisamos ajustar na API.
+- No caso da API, vamos gerar um ConfigMap.
+
+~~~~YAML
+apiVersion: v1
+kind: ConfigMap
+metadata:
+    name: {{ .Release.Name }}-api-configmap
+data:
+    Mongo__Host: {{ .Release.Name }}-mongo-service
+    Mongo__DataBase: {{ .Values.mongodb.databaseName }}
+~~~~
+
+
+- Atualmente o Deployment do API está assim:
+
+~~~~YAML
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-api-deployment
+spec:
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-api
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-api
+    spec:
+      containers:
+      - name: api
+        image: {{ .Values.api.image }}
+        ports:
+        - containerPort: 80
+        imagePullPolicy: Always
+        resources:
+          requests:
+            memory: "32Mi"
+            cpu: "500m"
+          limits:
+            memory: "64Mi"
+            cpu: "500m"
+        env:
+          - name: Mongo__User
+            value: {{ .Values.mongodb.credentials.userName }}
+          - name: Mongo__Password
+            value: {{ .Values.mongodb.credentials.userPassword }}
+          - name: Mongo__Host
+            value: {{ .Release.Name }}-mongo-service
+          - name: Mongo__DataBase
+            value: {{ .Values.mongodb.databaseName }}
+
+~~~~
+
+
+
+
+
+# PENDENTE:
+- Continua em 09:43.
+- Modificar os campos de ENV no Deployment do API, usar ConfigMAP.
