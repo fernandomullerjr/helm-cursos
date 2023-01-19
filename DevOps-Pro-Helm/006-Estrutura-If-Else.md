@@ -643,3 +643,33 @@ spec:
 # PENDENTE:
 - Continua em 09:43.
 - Modificar os campos de ENV no Deployment do API, usar ConfigMAP.
+
+
+
+
+
+
+
+# EXEMPLO - Uso de ConfigMap envFrom
+
+Use envFrom to define all of the ConfigMap's data as container environment variables. The key from the ConfigMap becomes the environment variable name in the Pod.
+pods/pod-configmap-envFrom.yaml [Copy pods/pod-configmap-envFrom.yaml to clipboard]
+
+~~~~YAML
+apiVersion: v1
+  kind: Pod
+  metadata:
+    name: dapi-test-pod
+  spec:
+    containers:
+      - name: test-container
+        image: registry.k8s.io/busybox
+        command: [ "/bin/sh", "-c", "env" ]
+        envFrom:
+        - configMapRef:
+            name: special-config
+    restartPolicy: Never
+~~~~
+
+
+
