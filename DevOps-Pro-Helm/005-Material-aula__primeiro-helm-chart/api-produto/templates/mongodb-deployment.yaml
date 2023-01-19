@@ -24,5 +24,10 @@ spec:
             memory: "1Gi"
             cpu: "1500m"
         envFrom:
+          {{ if empty .Values.mongodb.existSecret }}
           - secretRef:
               name: {{ .Release.Name }}-mongodb-secret
+          {{ else }}
+          - secretRef:
+              name: {{ .Values.mongodb.existSecret }}
+          {{ end }}

@@ -8,3 +8,4 @@ mongodb:
     userName: mongouser
     userPassword: mongopwd
   databaseName: admin
+  #existSecret: nome do secret

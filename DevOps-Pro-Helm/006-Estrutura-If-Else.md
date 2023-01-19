@@ -740,3 +740,412 @@ usando a Secret do Mongo
               secretKeyRef:
                 name: MONGO_INITDB_ROOT_PASSWORD
                 key: {{ .Release.Name }}-mongodb-secret
+
+
+
+- Ficou assim o Deployment da API:
+
+~~~~YAML
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-api-deployment
+spec:
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-api
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-api
+    spec:
+      containers:
+      - name: api
+        image: {{ .Values.api.image }}
+        ports:
+        - containerPort: 80
+        imagePullPolicy: Always
+        resources:
+          requests:
+            memory: "32Mi"
+            cpu: "500m"
+          limits:
+            memory: "64Mi"
+            cpu: "500m"
+        envFrom:
+          - configMapRef:
+              name: {{ .Release.Name }}-api-configmap
+        env:
+          - name: Mongo__User
+            valueFrom:
+              secretKeyRef:
+                name: MONGO_INITDB_ROOT_USERNAME
+                key: {{ .Release.Name }}-mongodb-secret
+          - name: Mongo__Password
+            valueFrom:
+              secretKeyRef:
+                name: MONGO_INITDB_ROOT_PASSWORD
+                key: {{ .Release.Name }}-mongodb-secret
+~~~~
+
+
+
+
+
+- Simulando upgrade:
+helm upgrade minhaapi <caminho-do-chart> --dry-run --debug
+helm upgrade minhaapi /home/fernando/cursos/helm-cursos/DevOps-Pro-Helm/005-Material-aula__primeiro-helm-chart/api-produto --dry-run --debug
+
+
+
+
+fernando@debian10x64:~$
+fernando@debian10x64:~$ helm ls
+NAME            NAMESPACE       REVISION        UPDATED                                 STATUS  CHART                   APP VERSION
+minhaapi        default         1               2023-01-14 00:39:29.189971908 -0300 -03 failed  api-produto-0.1.0       1.16.0
+fernando@debian10x64:~$
+fernando@debian10x64:~$
+fernando@debian10x64:~$
+fernando@debian10x64:~$
+fernando@debian10x64:~$ date
+Wed 18 Jan 2023 11:57:50 PM -03
+fernando@debian10x64:~$
+fernando@debian10x64:~$
+fernando@debian10x64:~$
+fernando@debian10x64:~$
+fernando@debian10x64:~$ kubectl get pods -A
+NAMESPACE       NAME                                                              READY   STATUS    RESTARTS        AGE
+default         minhaapi-api-deployment-8686474859-6grcf                          1/1     Running   2 (4d2h ago)    4d23h
+default         minhaapi-mongodb-deployment-7c664ccf4b-29fv5                      1/1     Running   2 (4d2h ago)    4d23h
+kube-system     coredns-78fcd69978-5xcpp                                          1/1     Running   9 (4d2h ago)    17d
+kube-system     etcd-minikube                                                     1/1     Running   22 (4d2h ago)   17d
+kube-system     kube-apiserver-minikube                                           1/1     Running   21 (4d2h ago)   17d
+kube-system     kube-controller-manager-minikube                                  1/1     Running   22 (4d2h ago)   17d
+kube-system     kube-proxy-5pc9k                                                  1/1     Running   9               17d
+kube-system     kube-scheduler-minikube                                           1/1     Running   18 (4d2h ago)   17d
+kube-system     storage-provisioner                                               1/1     Running   19 (24m ago)    17d
+nginx-ingress   meu-ingress-controller-ingress-nginx-controller-85685788f82hp89   1/1     Running   6 (4d2h ago)    12d
+nginx-ingress   meu-ingress-controller-ingress-nginx-controller-85685788f8xpg5v   1/1     Running   6 (4d2h ago)    12d
+fernando@debian10x64:~$
+fernando@debian10x64:~$
+fernando@debian10x64:~$
+fernando@debian10x64:~$
+fernando@debian10x64:~$
+fernando@debian10x64:~$
+fernando@debian10x64:~$ helm upgrade minhaapi /home/fernando/cursos/helm-cursos/DevOps-Pro-Helm/005-Material-aula__primeiro-helm-chart/api-produto --dry-run --debug
+upgrade.go:142: [debug] preparing upgrade for minhaapi
+upgrade.go:150: [debug] performing update for minhaapi
+upgrade.go:313: [debug] dry run for minhaapi
+Release "minhaapi" has been upgraded. Happy Helming!
+NAME: minhaapi
+LAST DEPLOYED: Wed Jan 18 23:57:58 2023
+NAMESPACE: default
+STATUS: pending-upgrade
+REVISION: 2
+TEST SUITE: None
+USER-SUPPLIED VALUES:
+{}
+
+COMPUTED VALUES:
+api:
+  image: fabricioveronez/pedelogo-catalogo:v1
+  serviceType: LoadBalancer
+mongodb:
+  credentials:
+    userName: mongouser
+    userPassword: mongopwd
+  databaseName: admin
+  tag: 4.2.8
+
+HOOKS:
+MANIFEST:
+---
+# Source: api-produto/templates/mongodb-secret.yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: minhaapi-mongodb-secret
+type: Opaque
+data:
+  MONGO_INITDB_ROOT_USERNAME: "bW9uZ291c2Vy"
+  MONGO_INITDB_ROOT_PASSWORD: "bW9uZ29wd2Q="
+---
+# Source: api-produto/templates/api-configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+    name: minhaapi-api-configmap
+data:
+    Mongo__Host: minhaapi-mongo-service
+    Mongo__DataBase: admin
+---
+# Source: api-produto/templates/api-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: minhaapi-api-service
+spec:
+  selector:
+    app: minhaapi-api
+  ports:
+  - port: 80
+    targetPort: 80
+  type: LoadBalancer
+---
+# Source: api-produto/templates/mongodb-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: minhaapi-mongo-service
+spec:
+  selector:
+    app: minhaapi-mongodb
+  ports:
+  - port: 27017
+    targetPort: 27017
+---
+# Source: api-produto/templates/api-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: minhaapi-api-deployment
+spec:
+  selector:
+    matchLabels:
+      app: minhaapi-api
+  template:
+    metadata:
+      labels:
+        app: minhaapi-api
+    spec:
+      containers:
+      - name: api
+        image: fabricioveronez/pedelogo-catalogo:v1
+        ports:
+        - containerPort: 80
+        imagePullPolicy: Always
+        resources:
+          requests:
+            memory: "32Mi"
+            cpu: "500m"
+          limits:
+            memory: "64Mi"
+            cpu: "500m"
+        envFrom:
+          - configMapRef:
+              name: minhaapi-api-configmap
+        env:
+          - name: Mongo__User
+            valueFrom:
+              secretKeyRef:
+                name: MONGO_INITDB_ROOT_USERNAME
+                key: minhaapi-mongodb-secret
+          - name: Mongo__Password
+            valueFrom:
+              secretKeyRef:
+                name: MONGO_INITDB_ROOT_PASSWORD
+                key: minhaapi-mongodb-secret
+---
+# Source: api-produto/templates/mongodb-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: minhaapi-mongodb-deployment
+spec:
+  selector:
+    matchLabels:
+      app: minhaapi-mongodb
+  template:
+    metadata:
+      labels:
+        app: minhaapi-mongodb
+    spec:
+      containers:
+      - name: mongodb
+        image: mongo:4.2.8
+        ports:
+        - containerPort: 27017
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "1500m"
+          limits:
+            memory: "1Gi"
+            cpu: "1500m"
+        envFrom:
+          - secretRef:
+              name: minhaapi-mongodb-secret
+
+NOTES:
+Instalado
+fernando@debian10x64:~$
+
+
+
+
+
+
+- Até aqui, trouxe os valores esperados do ConfigMap e do Secret.
+
+- Caso eu queira usar um Secret separado, vai ser necessário utilizar uma estrutura condicional.
+
+
+
+
+
+
+
+
+
+
+
+# ##############################################################################################################################################################
+# ##############################################################################################################################################################
+# ##############################################################################################################################################################
+# ##############################################################################################################################################################
+# Estrutura If/Else
+
+[14:20]
+
+- Inicialmente, os ajustes serão realizados no Deployment do MongoDB.
+
+- Atualmente o manifesto está assim:
+
+~~~~YAML
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-mongodb-deployment
+spec:
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-mongodb
+  template:
+    metadata:     
+      labels:
+        app: {{ .Release.Name }}-mongodb
+    spec:
+      containers:
+      - name: mongodb
+        image: mongo:{{ .Values.mongodb.tag }}
+        ports:
+        - containerPort: 27017
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "1500m"
+          limits:
+            memory: "1Gi"
+            cpu: "1500m"
+        envFrom:
+          - secretRef:
+              name: {{ .Release.Name }}-mongodb-secret
+~~~~
+
+
+- Além disso, iremos fazer modificações no Values, atualmente ele está assim:
+
+~~~~YAML
+api:
+  image: fabricioveronez/pedelogo-catalogo:v1
+  serviceType: LoadBalancer
+
+mongodb:
+  tag: 4.2.8
+  credentials:
+    userName: mongouser
+    userPassword: mongopwd
+  databaseName: admin
+~~~~
+
+
+
+
+
+- Exemplos de Template If/Else
+
+~~~~YAML
+{{ if PIPELINE }}
+  # Do something
+{{ else if OTHER_PIPELINE }}
+  # Do something else
+{{ else }}
+  # Default case
+{{ end }}
+~~~~
+
+
+Example 2:
+
+~~~~YAML
+{{ if .Values.debug }}
+  # Do something
+{{ else }}
+  # Do something else
+{{ end }}
+~~~~
+
+
+
+
+- Criamos o valor "existSecret", vamos deixar ele comentado por enquanto.
+
+- Explicando a estrutura if criada:
+    - No "if", verificamos se o valor do Value "existSecret" é vazio, caso positivo, vamos pegar o valor da nossa Secret do MongoDB.
+    - No "else", caso o valor "existSecret" não seja vazio, ou seja, exista um valor definido pra "existSecret", vamos pegar o valor dela.
+
+
+        envFrom:
+          {{ if empty .Values.mongodb.existSecret }}
+          - secretRef:
+              name: {{ .Release.Name }}-mongodb-secret
+          {{ else }}
+          - secretRef:
+              name: {{ .Values.mongodb.existSecret }}
+          {{ end }}
+
+
+- Após ajustada a estrutura de if/else, nosso manifesto do Deployment do MongoDB ficou assim:
+
+~~~~YAML
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-mongodb-deployment
+spec:
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-mongodb
+  template:
+    metadata:     
+      labels:
+        app: {{ .Release.Name }}-mongodb
+    spec:
+      containers:
+      - name: mongodb
+        image: mongo:{{ .Values.mongodb.tag }}
+        ports:
+        - containerPort: 27017
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "1500m"
+          limits:
+            memory: "1Gi"
+            cpu: "1500m"
+        envFrom:
+          {{ if empty .Values.mongodb.existSecret }}
+          - secretRef:
+              name: {{ .Release.Name }}-mongodb-secret
+          {{ else }}
+          - secretRef:
+              name: {{ .Values.mongodb.existSecret }}
+          {{ end }}
+~~~~
+
+
+
+
+- Simulando upgrade:
+helm upgrade minhaapi <caminho-do-chart> --dry-run --debug
+helm upgrade minhaapi /home/fernando/cursos/helm-cursos/DevOps-Pro-Helm/005-Material-aula__primeiro-helm-chart/api-produto --dry-run --debug
