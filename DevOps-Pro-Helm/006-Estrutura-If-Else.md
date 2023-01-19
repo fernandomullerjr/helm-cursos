@@ -1149,3 +1149,49 @@ spec:
 - Simulando upgrade:
 helm upgrade minhaapi <caminho-do-chart> --dry-run --debug
 helm upgrade minhaapi /home/fernando/cursos/helm-cursos/DevOps-Pro-Helm/005-Material-aula__primeiro-helm-chart/api-produto --dry-run --debug
+
+
+
+
+
+~~~~bash
+# Source: api-produto/templates/mongodb-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: minhaapi-mongodb-deployment
+spec:
+  selector:
+    matchLabels:
+      app: minhaapi-mongodb
+  template:
+    metadata:
+      labels:
+        app: minhaapi-mongodb
+    spec:
+      containers:
+      - name: mongodb
+        image: mongo:4.2.8
+        ports:
+        - containerPort: 27017
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "1500m"
+          limits:
+            memory: "1Gi"
+            cpu: "1500m"
+        envFrom:
+
+          - secretRef:
+              name: minhaapi-mongodb-secret
+
+NOTES:
+Instalado
+fernando@debian10x64:~$
+~~~~
+
+
+
+
+- Como o Value "existSecret" está vazio, ele pegou o Secret mesmo.
