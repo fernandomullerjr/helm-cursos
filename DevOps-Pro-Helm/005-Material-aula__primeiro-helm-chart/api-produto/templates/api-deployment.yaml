@@ -24,6 +24,9 @@ spec:
           limits:
             memory: "64Mi"
             cpu: "500m"
+        envFrom:
+          - configMapRef:
+              name: {{ .Release.Name }}-api-configmap
         env:
           - name: Mongo__User
             value: {{ .Values.mongodb.credentials.userName }}

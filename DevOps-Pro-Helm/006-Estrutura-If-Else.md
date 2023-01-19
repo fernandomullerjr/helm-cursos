@@ -673,3 +673,18 @@ apiVersion: v1
 
 
 
+
+
+
+
+- Ajustando o manifesto do Deployment do API:
+adicionando
+
+
+        envFrom:
+          - configMapRef:
+              name: {{ .Release.Name }}-api-configmap
+
+
+
+
