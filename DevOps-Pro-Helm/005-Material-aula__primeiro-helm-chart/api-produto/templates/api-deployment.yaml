@@ -29,10 +29,13 @@ spec:
               name: {{ .Release.Name }}-api-configmap
         env:
           - name: Mongo__User
-            value: {{ .Values.mongodb.credentials.userName }}
+            valueFrom:
+              secretKeyRef:
+                name: MONGO_INITDB_ROOT_USERNAME
+                key: {{ .Release.Name }}-mongodb-secret
           - name: Mongo__Password
-            value: {{ .Values.mongodb.credentials.userPassword }}
-          - name: Mongo__Host
-            value: {{ .Release.Name }}-mongo-service
-          - name: Mongo__DataBase
-            value: {{ .Values.mongodb.databaseName }}
+            valueFrom:
+              secretKeyRef:
+                name: MONGO_INITDB_ROOT_PASSWORD
+                key: {{ .Release.Name }}-mongodb-secret
+

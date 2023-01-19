@@ -7,7 +7,7 @@
 
 git status
 git add .
-git commit -m "Curso Formação DevOps PRO - Helm - Aula 6 - Estrutura If/Else"
+git commit -m "Curso Formação DevOps PRO - Helm - Aula 6 - Estrutura If/Else -"
 eval $(ssh-agent -s)
 ssh-add /home/fernando/.ssh/chave-debian10-github
 git push
@@ -673,13 +673,43 @@ apiVersion: v1
 
 
 
+# EXEMPLO - Uso de Secret
+
+This is an example of a Pod that uses a Secret via environment variables:
+
+~~~~YAML
+apiVersion: v1
+kind: Pod
+metadata:
+  name: secret-env-pod
+spec:
+  containers:
+  - name: mycontainer
+    image: redis
+    env:
+      - name: SECRET_USERNAME
+        valueFrom:
+          secretKeyRef:
+            name: mysecret
+            key: username
+            optional: false # same as default; "mysecret" must exist
+                            # and include a key named "username"
+      - name: SECRET_PASSWORD
+        valueFrom:
+          secretKeyRef:
+            name: mysecret
+            key: password
+            optional: false # same as default; "mysecret" must exist
+                            # and include a key named "password"
+  restartPolicy: Never
+~~~~
+
 
 
 
 
 - Ajustando o manifesto do Deployment do API:
-adicionando
-
+adicionando referencia de ENV do ConfigMap, da onde pegaremos os valores de Mongo__Host e Mongo__DataBase.
 
         envFrom:
           - configMapRef:
@@ -687,4 +717,26 @@ adicionando
 
 
 
+- Já os valores de User e Password, vamos pegar do Secret do MongoDB.
+adicionando referencia ao Secret
+exemplo:
 
+        valueFrom:
+          secretKeyRef:
+            name: mysecret
+            key: username
+
+usando a Secret do Mongo
+{{ .Release.Name }}-mongodb-secret
+
+        env:
+          - name: Mongo__User
+            valueFrom:
+              secretKeyRef:
+                name: MONGO_INITDB_ROOT_USERNAME
+                key: {{ .Release.Name }}-mongodb-secret
+          - name: Mongo__Password
+            valueFrom:
+              secretKeyRef:
+                name: MONGO_INITDB_ROOT_PASSWORD
+                key: {{ .Release.Name }}-mongodb-secret
