@@ -31,11 +31,19 @@ spec:
           - name: Mongo__User
             valueFrom:
               secretKeyRef:
-                name: MONGO_INITDB_ROOT_USERNAME
-                key: {{ .Release.Name }}-mongodb-secret
+                key: MONGO_INITDB_ROOT_USERNAME
+                {{- if empty .Values.mongodb.existSecret }}
+                name: {{ .Release.Name }}-mongodb-secret
+                {{- else }}
+                name: {{ .Values.mongodb.existSecret }}
+                {{- end }}
           - name: Mongo__Password
             valueFrom:
               secretKeyRef:
-                name: MONGO_INITDB_ROOT_PASSWORD
-                key: {{ .Release.Name }}-mongodb-secret
+                key: MONGO_INITDB_ROOT_PASSWORD
+                {{- if empty .Values.mongodb.existSecret }}
+                name: {{ .Release.Name }}-mongodb-secret
+                {{- else }}
+                name: {{ .Values.mongodb.existSecret }}
+                {{- end }}
 

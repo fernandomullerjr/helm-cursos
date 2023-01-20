@@ -1325,6 +1325,9 @@ fernando@debian10x64:~$
 - Porém agora ficamos com 1 problema apenas.
 - O nosso secret continua sendo gerado, mesmo quando dizemos que já existe um secret.
 - Temos que fazer uma condição no manifesto do Secret, para que ele não seja gerado, quando temos 1 secret, conforme o valor do campo "existSecret" em Values.
+- Vamos adicionar a condicional, se campo "existSecret" estiver vazio, cria o Secret conforme o manifesto:
+{{- if empty .Values.mongodb.existSecret }}
+{{- end }}
 
 - ANTES:
 
@@ -1342,4 +1345,374 @@ data:
 - DEPOIS:
 
 ~~~YAML
+{{- if empty .Values.mongodb.existSecret }}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ .Release.Name }}-mongodb-secret
+type: Opaque
+data:
+  MONGO_INITDB_ROOT_USERNAME: {{ .Values.mongodb.credentials.userName | b64enc | quote }}
+  MONGO_INITDB_ROOT_PASSWORD: {{ .Values.mongodb.credentials.userPassword | b64enc | quote }}
+{{- end }}
 ~~~
+
+
+- Simulando upgrade:
+helm upgrade minhaapi <caminho-do-chart> --dry-run --debug
+helm upgrade minhaapi /home/fernando/cursos/helm-cursos/DevOps-Pro-Helm/005-Material-aula__primeiro-helm-chart/api-produto --set mongodb.existSecret=umsecret --dry-run --debug
+
+- Agora não gerou o Secret do MongoDB, conforme o esperado, seguindo a estrutura de if else:
+
+~~~~bash
+fernando@debian10x64:~$ helm upgrade minhaapi /home/fernando/cursos/helm-cursos/DevOps-Pro-Helm/005-Material-aula__primeiro-helm-chart/api-produto --set mongodb.existSecret=umsecret --dry-run --debug
+upgrade.go:142: [debug] preparing upgrade for minhaapi
+upgrade.go:150: [debug] performing update for minhaapi
+upgrade.go:313: [debug] dry run for minhaapi
+Release "minhaapi" has been upgraded. Happy Helming!
+NAME: minhaapi
+LAST DEPLOYED: Thu Jan 19 23:24:42 2023
+NAMESPACE: default
+STATUS: pending-upgrade
+REVISION: 2
+TEST SUITE: None
+USER-SUPPLIED VALUES:
+mongodb:
+  existSecret: umsecret
+
+COMPUTED VALUES:
+api:
+  image: fabricioveronez/pedelogo-catalogo:v1
+  serviceType: LoadBalancer
+mongodb:
+  credentials:
+    userName: mongouser
+    userPassword: mongopwd
+  databaseName: admin
+  existSecret: umsecret
+  tag: 4.2.8
+
+HOOKS:
+MANIFEST:
+---
+# Source: api-produto/templates/api-configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+    name: minhaapi-api-configmap
+data:
+    Mongo__Host: minhaapi-mongo-service
+    Mongo__DataBase: admin
+---
+# Source: api-produto/templates/api-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: minhaapi-api-service
+spec:
+  selector:
+    app: minhaapi-api
+  ports:
+  - port: 80
+    targetPort: 80
+  type: LoadBalancer
+---
+# Source: api-produto/templates/mongodb-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: minhaapi-mongo-service
+spec:
+  selector:
+    app: minhaapi-mongodb
+  ports:
+  - port: 27017
+    targetPort: 27017
+---
+# Source: api-produto/templates/api-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: minhaapi-api-deployment
+spec:
+  selector:
+    matchLabels:
+      app: minhaapi-api
+  template:
+    metadata:
+      labels:
+        app: minhaapi-api
+    spec:
+      containers:
+      - name: api
+        image: fabricioveronez/pedelogo-catalogo:v1
+        ports:
+        - containerPort: 80
+        imagePullPolicy: Always
+        resources:
+          requests:
+            memory: "32Mi"
+            cpu: "500m"
+          limits:
+            memory: "64Mi"
+            cpu: "500m"
+        envFrom:
+          - configMapRef:
+              name: minhaapi-api-configmap
+        env:
+          - name: Mongo__User
+            valueFrom:
+              secretKeyRef:
+                name: MONGO_INITDB_ROOT_USERNAME
+                key: minhaapi-mongodb-secret
+          - name: Mongo__Password
+            valueFrom:
+              secretKeyRef:
+                name: MONGO_INITDB_ROOT_PASSWORD
+                key: minhaapi-mongodb-secret
+---
+# Source: api-produto/templates/mongodb-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: minhaapi-mongodb-deployment
+spec:
+  selector:
+    matchLabels:
+      app: minhaapi-mongodb
+  template:
+    metadata:
+      labels:
+        app: minhaapi-mongodb
+    spec:
+      containers:
+      - name: mongodb
+        image: mongo:4.2.8
+        ports:
+        - containerPort: 27017
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "1500m"
+          limits:
+            memory: "1Gi"
+            cpu: "1500m"
+        envFrom:
+          - secretRef:
+              name: umsecret
+
+NOTES:
+Instalado
+fernando@debian10x64:~$
+~~~~
+
+
+
+
+
+
+- Efetuando ajuste, para que o manifesto do Deployment da API tenha uma condição if else para o Secret também:
+
+- ANTES:
+
+~~~YAML
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-api-deployment
+spec:
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-api
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-api
+    spec:
+      containers:
+      - name: api
+        image: {{ .Values.api.image }}
+        ports:
+        - containerPort: 80
+        imagePullPolicy: Always
+        resources:
+          requests:
+            memory: "32Mi"
+            cpu: "500m"
+          limits:
+            memory: "64Mi"
+            cpu: "500m"
+        envFrom:
+          - configMapRef:
+              name: {{ .Release.Name }}-api-configmap
+        env:
+          - name: Mongo__User
+            valueFrom:
+              secretKeyRef:
+                name: MONGO_INITDB_ROOT_USERNAME
+                key: {{ .Release.Name }}-mongodb-secret
+          - name: Mongo__Password
+            valueFrom:
+              secretKeyRef:
+                name: MONGO_INITDB_ROOT_PASSWORD
+                key: {{ .Release.Name }}-mongodb-secret
+~~~
+
+
+
+- DEPOIS:
+
+~~~YAML
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-api-deployment
+spec:
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-api
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-api
+    spec:
+      containers:
+      - name: api
+        image: {{ .Values.api.image }}
+        ports:
+        - containerPort: 80
+        imagePullPolicy: Always
+        resources:
+          requests:
+            memory: "32Mi"
+            cpu: "500m"
+          limits:
+            memory: "64Mi"
+            cpu: "500m"
+        envFrom:
+          - configMapRef:
+              name: {{ .Release.Name }}-api-configmap
+        env:
+          - name: Mongo__User
+            valueFrom:
+              secretKeyRef:
+                key: MONGO_INITDB_ROOT_USERNAME
+                {{- if empty .Values.mongodb.existSecret }}
+                name: {{ .Release.Name }}-mongodb-secret
+                {{- else }}
+                name: {{ .Values.mongodb.existSecret }}
+                {{- end }}
+          - name: Mongo__Password
+            valueFrom:
+              secretKeyRef:
+                key: MONGO_INITDB_ROOT_PASSWORD
+                {{- if empty .Values.mongodb.existSecret }}
+                name: {{ .Release.Name }}-mongodb-secret
+                {{- else }}
+                name: {{ .Values.mongodb.existSecret }}
+                {{- end }}
+~~~
+
+
+
+
+- Simulando upgrade, com valor do --set especificado, setando um valor para o campo "existSecret" do Values:
+helm upgrade minhaapi <caminho-do-chart> --dry-run --debug
+helm upgrade minhaapi /home/fernando/cursos/helm-cursos/DevOps-Pro-Helm/005-Material-aula__primeiro-helm-chart/api-produto --set mongodb.existSecret=umsecret --dry-run --debug
+
+- Resultado:
+
+~~~~bash
+# Source: api-produto/templates/api-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: minhaapi-api-deployment
+spec:
+  selector:
+    matchLabels:
+      app: minhaapi-api
+  template:
+    metadata:
+      labels:
+        app: minhaapi-api
+    spec:
+      containers:
+      - name: api
+        image: fabricioveronez/pedelogo-catalogo:v1
+        ports:
+        - containerPort: 80
+        imagePullPolicy: Always
+        resources:
+          requests:
+            memory: "32Mi"
+            cpu: "500m"
+          limits:
+            memory: "64Mi"
+            cpu: "500m"
+        envFrom:
+          - configMapRef:
+              name: minhaapi-api-configmap
+        env:
+          - name: Mongo__User
+            valueFrom:
+              secretKeyRef:
+                key: MONGO_INITDB_ROOT_USERNAME
+                name: umsecret
+          - name: Mongo__Password
+            valueFrom:
+              secretKeyRef:
+                key: MONGO_INITDB_ROOT_PASSWORD
+                name: umsecret
+---
+~~~~
+
+
+- Simulando sem um valor do existSecret setado:
+
+helm upgrade minhaapi /home/fernando/cursos/helm-cursos/DevOps-Pro-Helm/005-Material-aula__primeiro-helm-chart/api-produto --dry-run --debug
+
+~~~~bash
+# Source: api-produto/templates/api-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: minhaapi-api-deployment
+spec:
+  selector:
+    matchLabels:
+      app: minhaapi-api
+  template:
+    metadata:
+      labels:
+        app: minhaapi-api
+    spec:
+      containers:
+      - name: api
+        image: fabricioveronez/pedelogo-catalogo:v1
+        ports:
+        - containerPort: 80
+        imagePullPolicy: Always
+        resources:
+          requests:
+            memory: "32Mi"
+            cpu: "500m"
+          limits:
+            memory: "64Mi"
+            cpu: "500m"
+        envFrom:
+          - configMapRef:
+              name: minhaapi-api-configmap
+        env:
+          - name: Mongo__User
+            valueFrom:
+              secretKeyRef:
+                key: MONGO_INITDB_ROOT_USERNAME
+                name: minhaapi-mongodb-secret
+          - name: Mongo__Password
+            valueFrom:
+              secretKeyRef:
+                key: MONGO_INITDB_ROOT_PASSWORD
+                name: minhaapi-mongodb-secret
+---
+~~~~
