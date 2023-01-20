@@ -1223,9 +1223,123 @@ DEPOIS:
           {{- end }}
 
 
-
+- Maiores detalhes sobre:
+<https://helm.sh/docs/chart_template_guide/control_structures/#controlling-whitespace>
 
 
 - Simulando upgrade:
 helm upgrade minhaapi <caminho-do-chart> --dry-run --debug
 helm upgrade minhaapi /home/fernando/cursos/helm-cursos/DevOps-Pro-Helm/005-Material-aula__primeiro-helm-chart/api-produto --dry-run --debug
+
+- Após aplicado AJUSTE, colocando o traço no começo da das chaves, o espaço em branco após o "envFrom" não surgiu novamente:
+
+~~~~bash
+# Source: api-produto/templates/mongodb-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: minhaapi-mongodb-deployment
+spec:
+  selector:
+    matchLabels:
+      app: minhaapi-mongodb
+  template:
+    metadata:
+      labels:
+        app: minhaapi-mongodb
+    spec:
+      containers:
+      - name: mongodb
+        image: mongo:4.2.8
+        ports:
+        - containerPort: 27017
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "1500m"
+          limits:
+            memory: "1Gi"
+            cpu: "1500m"
+        envFrom:
+          - secretRef:
+              name: minhaapi-mongodb-secret
+
+NOTES:
+Instalado
+fernando@debian10x64:~$
+~~~~
+
+
+
+
+- Agora vamos simular com o valor do Value "existSecret" setado manualmente usando o parametro --set no comando de upgrade:
+  --set mongodb.existSecret=umsecret
+
+- Simulando upgrade:
+helm upgrade minhaapi <caminho-do-chart> --dry-run --debug
+helm upgrade minhaapi /home/fernando/cursos/helm-cursos/DevOps-Pro-Helm/005-Material-aula__primeiro-helm-chart/api-produto --set mongodb.existSecret=umsecret --dry-run --debug
+
+- Resultado:
+
+~~~~bash
+# Source: api-produto/templates/mongodb-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: minhaapi-mongodb-deployment
+spec:
+  selector:
+    matchLabels:
+      app: minhaapi-mongodb
+  template:
+    metadata:
+      labels:
+        app: minhaapi-mongodb
+    spec:
+      containers:
+      - name: mongodb
+        image: mongo:4.2.8
+        ports:
+        - containerPort: 27017
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "1500m"
+          limits:
+            memory: "1Gi"
+            cpu: "1500m"
+        envFrom:
+          - secretRef:
+              name: umsecret
+
+NOTES:
+Instalado
+fernando@debian10x64:~$
+~~~~
+
+
+
+
+
+- Gerou tudo certinho.
+- Porém agora ficamos com 1 problema apenas.
+- O nosso secret continua sendo gerado, mesmo quando dizemos que já existe um secret.
+- Temos que fazer uma condição no manifesto do Secret, para que ele não seja gerado, quando temos 1 secret, conforme o valor do campo "existSecret" em Values.
+
+- ANTES:
+
+~~~YAML
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ .Release.Name }}-mongodb-secret
+type: Opaque
+data:
+  MONGO_INITDB_ROOT_USERNAME: {{ .Values.mongodb.credentials.userName | b64enc | quote }}
+  MONGO_INITDB_ROOT_PASSWORD: {{ .Values.mongodb.credentials.userPassword | b64enc | quote }}
+~~~
+
+- DEPOIS:
+
+~~~YAML
+~~~
