@@ -1195,3 +1195,37 @@ fernando@debian10x64:~$
 
 
 - Como o Value "existSecret" está vazio, ele pegou o Secret mesmo.
+
+- Porém, abaixo do "envFrom" temos um espaço em branco.
+
+- Faltava colocar um traço - após as duas chaves que abrem as condições:
+
+ANTES:
+
+        envFrom:
+          {{ if empty .Values.mongodb.existSecret }}
+          - secretRef:
+              name: {{ .Release.Name }}-mongodb-secret
+          {{ else }}
+          - secretRef:
+              name: {{ .Values.mongodb.existSecret }}
+          {{ end }}
+
+DEPOIS:
+
+        envFrom:
+          {{- if empty .Values.mongodb.existSecret }}
+          - secretRef:
+              name: {{ .Release.Name }}-mongodb-secret
+          {{- else }}
+          - secretRef:
+              name: {{ .Values.mongodb.existSecret }}
+          {{- end }}
+
+
+
+
+
+- Simulando upgrade:
+helm upgrade minhaapi <caminho-do-chart> --dry-run --debug
+helm upgrade minhaapi /home/fernando/cursos/helm-cursos/DevOps-Pro-Helm/005-Material-aula__primeiro-helm-chart/api-produto --dry-run --debug
