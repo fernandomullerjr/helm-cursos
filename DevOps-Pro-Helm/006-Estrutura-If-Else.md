@@ -1733,15 +1733,16 @@ continua em
 # ##############################################################################################################################################################
 # ##############################################################################################################################################################
 # Dia 21/01/2023
+
 continua em
 21:14
 
-
+- Agora vamos testar o funcionamento dos recursos no cluster.
 
 
 - ANTES:
 
-
+~~~~bash
 fernando@debian10x64:~$ helm ls
 NAME            NAMESPACE       REVISION        UPDATED                                 STATUS  CHART                   APP VERSION
 minhaapi        default         1               2023-01-14 00:39:29.189971908 -0300 -03 failed  api-produto-0.1.0       1.16.0
@@ -1765,8 +1766,7 @@ NAME                                                     DESIRED   CURRENT   REA
 replicaset.apps/minhaapi-api-deployment-8686474859       1         1         1       7d16h
 replicaset.apps/minhaapi-mongodb-deployment-7c664ccf4b   1         1         1       7d16h
 fernando@debian10x64:~$
-
-
+~~~~
 
 
 
@@ -1774,7 +1774,7 @@ fernando@debian10x64:~$
 - Aplicando upgrade sem o Dry-Run, para aplicar no Helm de verdade:
 helm upgrade minhaapi /home/fernando/cursos/helm-cursos/DevOps-Pro-Helm/005-Material-aula__primeiro-helm-chart/api-produto
 
-
+~~~~bash
 fernando@debian10x64:~$ helm upgrade minhaapi /home/fernando/cursos/helm-cursos/DevOps-Pro-Helm/005-Material-aula__primeiro-helm-chart/api-produto
 Release "minhaapi" has been upgraded. Happy Helming!
 NAME: minhaapi
@@ -1786,8 +1786,6 @@ TEST SUITE: None
 NOTES:
 Instalado
 fernando@debian10x64:~$
-
-
 
 fernando@debian10x64:~$ kubectl get all
 NAME                                               READY   STATUS    RESTARTS   AGE
@@ -1809,3 +1807,74 @@ replicaset.apps/minhaapi-api-deployment-8686474859       0         0         0  
 replicaset.apps/minhaapi-mongodb-deployment-7c664ccf4b   0         0         0       7d16h
 replicaset.apps/minhaapi-mongodb-deployment-85d944c57d   1         1         1       16s
 fernando@debian10x64:~$
+~~~~
+
+
+
+- Expondo o service da API:
+
+minikube service minhaapi-api-service
+
+~~~~bash
+fernando@debian10x64:~$ minikube service minhaapi-api-service
+|-----------|----------------------|-------------|---------------------------|
+| NAMESPACE |         NAME         | TARGET PORT |            URL            |
+|-----------|----------------------|-------------|---------------------------|
+| default   | minhaapi-api-service |          80 | http://192.168.49.2:32138 |
+|-----------|----------------------|-------------|---------------------------|
+* Opening service default/minhaapi-api-service in default browser...
+~~~~
+
+
+
+- Acessando a API do Swagger:
+
+http://192.168.49.2:32138/swagger/index.html
+<http://192.168.49.2:32138/swagger/index.html>
+
+
+
+- Testando um GET no /produto:
+
+~~~~bash
+Responses
+Curl
+
+curl -X GET "http://192.168.49.2:32138/Produto" -H  "accept: text/plain"
+
+Request URL
+
+http://192.168.49.2:32138/Produto
+
+Server response
+Code	Details
+200	
+Response body
+Download
+
+[]
+
+Response headers
+
+ content-type: application/json; charset=utf-8  date: Sat21 Jan 2023 20:08:46 GMT  server: Kestrel  transfer-encoding: chunked 
+
+Responses
+Code	Description	Links
+200	
+
+Success
+~~~~
+
+
+
+- Tudo funcionando.
+
+- Agora estamos na Revision 2 do nosso Chart no Helm:
+
+~~~~bash
+fernando@debian10x64:~$ helm ls
+NAME            NAMESPACE       REVISION        UPDATED                                 STATUS          CHART                   APP VERSION
+minhaapi        default         2               2023-01-21 17:04:24.039505638 -0300 -03 deployed        api-produto-0.1.0       1.16.0
+fernando@debian10x64:~$
+~~~~
+
