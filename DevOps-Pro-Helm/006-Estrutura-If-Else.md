@@ -1736,3 +1736,76 @@ continua em
 continua em
 21:14
 
+
+
+
+- ANTES:
+
+
+fernando@debian10x64:~$ helm ls
+NAME            NAMESPACE       REVISION        UPDATED                                 STATUS  CHART                   APP VERSION
+minhaapi        default         1               2023-01-14 00:39:29.189971908 -0300 -03 failed  api-produto-0.1.0       1.16.0
+fernando@debian10x64:~$
+fernando@debian10x64:~$
+fernando@debian10x64:~$ kubectl get all
+NAME                                               READY   STATUS    RESTARTS      AGE
+pod/minhaapi-api-deployment-8686474859-6grcf       1/1     Running   4 (41h ago)   7d16h
+pod/minhaapi-mongodb-deployment-7c664ccf4b-29fv5   1/1     Running   4 (41h ago)   7d16h
+
+NAME                             TYPE           CLUSTER-IP       EXTERNAL-IP   PORT(S)        AGE
+service/kubernetes               ClusterIP      10.96.0.1        <none>        443/TCP        20d
+service/minhaapi-api-service     LoadBalancer   10.104.23.138    <pending>     80:32138/TCP   7d16h
+service/minhaapi-mongo-service   ClusterIP      10.105.126.136   <none>        27017/TCP      7d16h
+
+NAME                                          READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/minhaapi-api-deployment       1/1     1            1           7d16h
+deployment.apps/minhaapi-mongodb-deployment   1/1     1            1           7d16h
+
+NAME                                                     DESIRED   CURRENT   READY   AGE
+replicaset.apps/minhaapi-api-deployment-8686474859       1         1         1       7d16h
+replicaset.apps/minhaapi-mongodb-deployment-7c664ccf4b   1         1         1       7d16h
+fernando@debian10x64:~$
+
+
+
+
+
+
+- Aplicando upgrade sem o Dry-Run, para aplicar no Helm de verdade:
+helm upgrade minhaapi /home/fernando/cursos/helm-cursos/DevOps-Pro-Helm/005-Material-aula__primeiro-helm-chart/api-produto
+
+
+fernando@debian10x64:~$ helm upgrade minhaapi /home/fernando/cursos/helm-cursos/DevOps-Pro-Helm/005-Material-aula__primeiro-helm-chart/api-produto
+Release "minhaapi" has been upgraded. Happy Helming!
+NAME: minhaapi
+LAST DEPLOYED: Sat Jan 21 17:04:24 2023
+NAMESPACE: default
+STATUS: deployed
+REVISION: 2
+TEST SUITE: None
+NOTES:
+Instalado
+fernando@debian10x64:~$
+
+
+
+fernando@debian10x64:~$ kubectl get all
+NAME                                               READY   STATUS    RESTARTS   AGE
+pod/minhaapi-api-deployment-6d998c4f44-zbrbt       1/1     Running   0          16s
+pod/minhaapi-mongodb-deployment-85d944c57d-8flk4   1/1     Running   0          16s
+
+NAME                             TYPE           CLUSTER-IP       EXTERNAL-IP   PORT(S)        AGE
+service/kubernetes               ClusterIP      10.96.0.1        <none>        443/TCP        20d
+service/minhaapi-api-service     LoadBalancer   10.104.23.138    <pending>     80:32138/TCP   7d16h
+service/minhaapi-mongo-service   ClusterIP      10.105.126.136   <none>        27017/TCP      7d16h
+
+NAME                                          READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/minhaapi-api-deployment       1/1     1            1           7d16h
+deployment.apps/minhaapi-mongodb-deployment   1/1     1            1           7d16h
+
+NAME                                                     DESIRED   CURRENT   READY   AGE
+replicaset.apps/minhaapi-api-deployment-6d998c4f44       1         1         1       16s
+replicaset.apps/minhaapi-api-deployment-8686474859       0         0         0       7d16h
+replicaset.apps/minhaapi-mongodb-deployment-7c664ccf4b   0         0         0       7d16h
+replicaset.apps/minhaapi-mongodb-deployment-85d944c57d   1         1         1       16s
+fernando@debian10x64:~$
