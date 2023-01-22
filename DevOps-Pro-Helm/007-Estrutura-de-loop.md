@@ -512,3 +512,164 @@ O campo host é especificado na regra de Ingress através da sintaxe "{{ . }}". 
 Por exemplo, se a lista "api.ingress" no arquivo de valores do Helm tiver os valores "example1.com" e "example2.com", o manifesto criará duas regras de Ingress. A primeira regra terá o host "example1.com" e a segunda regra terá o host "example2.com". Isso permite que várias regras de Ingress sejam criadas automaticamente a partir de uma única configuração, sem precisar escrever manualmente cada regra.
 
 Esse é uma forma de parametrizar o manifesto, onde é possível configurar alguns valores antes de subir o manifesto. Isso é importante para não colocar informações sensíveis diretamente no manifesto.
+
+
+
+# ##############################################################################################################################################################
+# {{ . }}
+
+<https://helm.sh/docs/chart_template_guide/control_structures/>
+
+Sometimes it's useful to be able to quickly make a list inside of your template, and then iterate over that list. Helm templates have a function to make this easy: tuple. In computer science, a tuple is a list-like collection of fixed size, but with arbitrary data types. This roughly conveys the way a tuple is used.
+
+  sizes: |-
+    {{- range tuple "small" "medium" "large" }}
+    - {{ . }}
+    {{- end }}    
+
+The above will produce this:
+
+  sizes: |-
+    - small
+    - medium
+    - large    
+
+In addition to lists and tuples, range can be used to iterate over collections that have a key and a value (like a map or dict). We'll see how to do that in the next section when we introduce template variables.
+
+
+
+
+
+
+# continua
+Continua em 06:05
+
+
+
+
+- Efetuando upgrade.
+
+helm upgrade minhaapi /home/fernando/cursos/helm-cursos/DevOps-Pro-Helm/005-Material-aula__primeiro-helm-chart/api-produto
+
+~~~~bash
+fernando@debian10x64:~$ helm ls
+NAME            NAMESPACE       REVISION        UPDATED                                 STATUS          CHART                   APP VERSION
+minhaapi        default         2               2023-01-21 17:04:24.039505638 -0300 -03 deployed        api-produto-0.1.0       1.16.0
+fernando@debian10x64:~$
+fernando@debian10x64:~$
+fernando@debian10x64:~$
+fernando@debian10x64:~$
+fernando@debian10x64:~$
+fernando@debian10x64:~$ helm upgrade minhaapi /home/fernando/cursos/helm-cursos/DevOps-Pro-Helm/005-Material-aula__primeiro-helm-chart/api-produto
+Release "minhaapi" has been upgraded. Happy Helming!
+NAME: minhaapi
+LAST DEPLOYED: Sat Jan 21 22:23:52 2023
+NAMESPACE: default
+STATUS: deployed
+REVISION: 3
+TEST SUITE: None
+NOTES:
+Instalado
+fernando@debian10x64:~$
+
+
+fernando@debian10x64:~$ kubectl get ingress
+NAME                   CLASS           HOSTS                ADDRESS   PORTS   AGE
+minhaapi-api-ingress   nginx-example   aulakubedev.com.br             80      13s
+fernando@debian10x64:~$
+~~~~
+
+
+
+
+
+- No exemplo acima, o ingress criou o ingress com um Host apenas.
+
+
+- Agora vamos fazer com que o ingress tenha 2 hosts, no caso, responsa a 2 endereços diferentes.
+- Ajustar o campo ingress, no arquivo values.yaml
+
+DE:
+
+~~~~YAML
+api:
+  image: fabricioveronez/pedelogo-catalogo:v1
+  serviceType: ClusterIP
+  ingress:
+  - aulakubedev.com.br
+
+mongodb:
+  tag: 4.2.8
+  credentials:
+    userName: mongouser
+    userPassword: mongopwd
+  databaseName: admin
+  #existSecret: nome do secret
+~~~~
+
+
+- PARA:
+
+~~~~YAML
+api:
+  image: fabricioveronez/pedelogo-catalogo:v1
+  serviceType: ClusterIP
+  ingress:
+  - aulakubedev.com.br
+  - api.aulakubedev.com.br
+
+mongodb:
+  tag: 4.2.8
+  credentials:
+    userName: mongouser
+    userPassword: mongopwd
+  databaseName: admin
+  #existSecret: nome do secret
+~~~~
+
+
+
+
+
+
+
+- Simulando:
+
+helm upgrade minhaapi /home/fernando/cursos/helm-cursos/DevOps-Pro-Helm/005-Material-aula__primeiro-helm-chart/api-produto --set mongodb.existSecret=umsecret --dry-run --debug
+
+~~~~bash
+# Source: api-produto/templates/api-ingress.yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: minhaapi-api-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  ingressClassName: nginx-example
+  rules:
+  - host: aulakubedev.com.br
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+            service:
+              name: minhaapi-api-service
+              port:
+                number: 80
+  - host: api.aulakubedev.com.br
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+            service:
+              name: minhaapi-api-service
+              port:
+                number: 80
+
+NOTES:
+Instalado
+fernando@debian10x64:~$
+~~~~

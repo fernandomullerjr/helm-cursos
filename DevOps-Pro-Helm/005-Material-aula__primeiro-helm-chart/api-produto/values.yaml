@@ -3,6 +3,7 @@ api:
   serviceType: ClusterIP
   ingress:
   - aulakubedev.com.br
+  - api.aulakubedev.com.br
 
 mongodb:
   tag: 4.2.8
