@@ -8,13 +8,14 @@ spec:
   ingressClassName: nginx-example
   rules:
   {{- range .Values.api.ingress }}
-  {{- end }}
-  - http:
+  - host: {{ . }}
+    http:
       paths:
-      - path: /testpath
+      - path: /
         pathType: Prefix
         backend:
-          service:
-            name: test
-            port:
-              number: 80
+            service:
+              name: {{ $.Release.Name }}-api-service
+              port:
+                number: 80
+  {{- end }}
