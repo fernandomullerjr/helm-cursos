@@ -672,4 +672,21 @@ spec:
 NOTES:
 Instalado
 fernando@debian10x64:~$
+
+
+
+
+Verificando o helm
+
+fernando@debian10x64:~$ helm ls
+NAME            NAMESPACE       REVISION        UPDATED                                 STATUS          CHART                   APP VERSION
+minhaapi        default         3               2023-01-21 22:23:52.246703234 -0300 -03 deployed        api-produto-0.1.0       1.16.0
+fernando@debian10x64:~$
+
 ~~~~
+
+
+
+
+
+
