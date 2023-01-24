@@ -363,3 +363,17 @@ fernando@debian10x64:~$
 
 
 
+
+- Adicionando comentários, usando um bloco de documentação:
+    {{/* Generate basic labels */}}
+
+- Exemplo:
+
+~~~~YAML
+{{/* Generate basic labels */}}
+{{- define "mychart.labels" }}
+  labels:
+    generator: helm
+    date: {{ now | htmlDate }}
+{{- end }}
+~~~~
