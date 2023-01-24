@@ -16,4 +16,6 @@ A sintaxe para chamar um Named Template é a seguinte:
 {{ template "nome_do_template" . }}
 ~~~~
 
+- O ponto é pra passar o contexto atual.
+
 Espero que isso ajude a entender como os Named Templates funcionam no Helm.
