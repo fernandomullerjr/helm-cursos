@@ -19,3 +19,19 @@ A sintaxe para chamar um Named Template é a seguinte:
 - O ponto é pra passar o contexto atual.
 
 Espero que isso ajude a entender como os Named Templates funcionam no Helm.
+
+
+
+- Adicionando comentários, usando um bloco de documentação:
+    {{/* Generate basic labels */}}
+
+- Exemplo:
+
+~~~~YAML
+{{/* Generate basic labels */}}
+{{- define "mychart.labels" }}
+  labels:
+    generator: helm
+    date: {{ now | htmlDate }}
+{{- end }}
+~~~~
