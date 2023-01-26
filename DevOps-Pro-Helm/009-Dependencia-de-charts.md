@@ -174,6 +174,8 @@ mongodb:
 
 DevOps-Pro-Helm/009-Material-chart-novo/api-produto/templates/_helpers.tpl
 
+DE:
+
 ~~~~YAML
 {{- define "mongodb.serviceName" -}}
 {{ .Release.Name }}-mongo-service
@@ -185,12 +187,13 @@ PARA:
 ~~~~YAML
 {{/* Nome do Service do MongoDB */}}
 {{- define "mongodb.serviceName" -}}
-{{ .Release.Name }}-mongo
+{{ .Release.Name }}-mongodb
 {{- end -}}
 ~~~~
 
 
 
+- ATENÇÃO:
+Cuidar no final, para este chart o nome do Mongo é mongodb, ao invés de só mongo.
 
-- VIDEO CONTINUA EM
-06:51
+
