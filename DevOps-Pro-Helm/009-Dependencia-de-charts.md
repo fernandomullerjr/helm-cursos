@@ -196,4 +196,82 @@ PARA:
 - ATENÇÃO:
 Cuidar no final, para este chart o nome do Mongo é mongodb, ao invés de só mongo.
 
+- Com o template ajustado, em caso de mudança do nome do Mongo, não precisamos editar em vários lugares.
 
+
+
+# Secret
+
+- Agora vamos criar uma Secret para a API.
+- Vamos colocar nela os valores que estavam no env do API Deployment.
+
+DevOps-Pro-Helm/009-Material-chart-novo/api-produto/templates/api-secret.yaml
+
+~~~~YAML
+apiVersion: v1
+kind: Secret
+metadata:
+    name: {{ .Release.Name }}-api-secret
+data:
+    Mongo__User: {{ .Values.mongodb.auth.usernames }}
+    Mongo__Password: {{ .Values.mongodb.auth.passwords }}
+~~~~
+
+
+- Ajustado o value do campo "Mongo__DataBase" no manifesto do ConfigMap, visto que o values.yaml foi alterada a estrutura, para ficar de acordo com o Chart do Bitnami:
+
+DevOps-Pro-Helm/009-Material-chart-novo/api-produto/templates/api-configmap.yaml
+
+~~~~YAML
+apiVersion: v1
+kind: ConfigMap
+metadata:
+    name: {{ .Release.Name }}-api-configmap
+data:
+    Mongo__Host: {{ template "mongodb.serviceName" . }}
+    Mongo__DataBase: {{ .Values.mongodb.auth.databases }}
+~~~~
+
+
+
+
+- Adicionar no manifesto do Deployment da API a referencia ao Secret:
+
+          - secretRef:
+              name: {{ .Release.Name }}-api-secret
+
+- Ficando assim após o ajuste:
+
+~~~~YAML
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-api-deployment
+spec:
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-api
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-api
+    spec:
+      containers:
+      - name: api
+        image: {{ .Values.api.image }}
+        ports:
+        - containerPort: 80
+        imagePullPolicy: Always
+        resources:
+          requests:
+            memory: "32Mi"
+            cpu: "500m"
+          limits:
+            memory: "64Mi"
+            cpu: "500m"
+        envFrom:
+          - configMapRef:
+              name: {{ .Release.Name }}-api-configmap
+          - secretRef:
+              name: {{ .Release.Name }}-api-secret
+~~~~
