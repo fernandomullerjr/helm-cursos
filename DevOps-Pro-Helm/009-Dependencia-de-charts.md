@@ -275,3 +275,228 @@ spec:
           - secretRef:
               name: {{ .Release.Name }}-api-secret
 ~~~~
+
+
+
+
+- Agora vamos executar um comando que vai pegar as dependencias e baixar para junto do meu Chart:
+
+helm dependency build <caminho-do-chart>
+helm dependency build /home/fernando/cursos/helm-cursos/DevOps-Pro-Helm/009-Material-chart-novo/api-produto/
+
+- Porém nada ocorreu:
+
+~~~~bash
+fernando@debian10x64:~$ helm dependency build /home/fernando/cursos/helm-cursos/DevOps-Pro-Helm/009-Material-chart-novo/api-produto/
+fernando@debian10x64:~$
+fernando@debian10x64:~$
+~~~~
+
+- Estava faltando o trecho de código sobre a dependencia, no arquivo Chart.yaml:
+
+DevOps-Pro-Helm/009-Material-chart-novo/api-produto/Chart.yaml
+
+~~~~YAML
+dependencies:
+- name: mongodb
+  version: "13.6.4"
+  repository: "https://charts.bitnami.com/bitnami"
+~~~~
+
+- Executando o build de dependencias novamente:
+
+helm dependency build /home/fernando/cursos/helm-cursos/DevOps-Pro-Helm/009-Material-chart-novo/api-produto/
+
+~~~~bash
+fernando@debian10x64:~$ helm dependency build /home/fernando/cursos/helm-cursos/DevOps-Pro-Helm/009-Material-chart-novo/api-produto/
+Getting updates for unmanaged Helm repositories...
+...Successfully got an update from the "https://charts.bitnami.com/bitnami" chart repository
+Hang tight while we grab the latest from your chart repositories...
+...Successfully got an update from the "ingress-nginx" chart repository
+...Successfully got an update from the "stable" chart repository
+Update Complete. ⎈Happy Helming!⎈
+Saving 1 charts
+Downloading mongodb from repo https://charts.bitnami.com/bitnami
+Deleting outdated charts
+fernando@debian10x64:~$
+~~~~
+
+
+- Ele gera um arquivo tgz na pasta "charts":
+  /home/fernando/cursos/helm-cursos/DevOps-Pro-Helm/009-Material-chart-novo/api-produto/charts/mongodb-13.6.4.tgz
+
+
+
+- Efetuando um Upgrade com dry-run para ver os resultados:
+
+helm upgrade minhaapi /home/fernando/cursos/helm-cursos/DevOps-Pro-Helm/009-Material-chart-novo/api-produto --dry-run --debug
+
+
+erro
+
+
+fernando@debian10x64:~$ helm upgrade minhaapi /home/fernando/cursos/helm-cursos/DevOps-Pro-Helm/009-Material-chart-novo/api-produto --dry-run --debug
+upgrade.go:142: [debug] preparing upgrade for minhaapi
+upgrade.go:524: [debug] copying values from minhaapi (v5) to new release.
+Error: UPGRADE FAILED: template: api-produto/charts/mongodb/templates/standalone/dep-sts.yaml:189:32: executing "api-produto/charts/mongodb/templates/standalone/dep-sts.yaml" at <include "mongodb.customUsers" .>: error calling include: template: api-produto/charts/mongodb/templates/_helpers.tpl:128:21: executing "mongodb.customUsers" at <.Values.auth.usernames>: range can't iterate over mongouser
+helm.go:84: [debug] template: api-produto/charts/mongodb/templates/standalone/dep-sts.yaml:189:32: executing "api-produto/charts/mongodb/templates/standalone/dep-sts.yaml" at <include "mongodb.customUsers" .>: error calling include: template: api-produto/charts/mongodb/templates/_helpers.tpl:128:21: executing "mongodb.customUsers" at <.Values.auth.usernames>: range can't iterate over mongouser
+UPGRADE FAILED
+main.newUpgradeCmd.func2
+        helm.sh/helm/v3/cmd/helm/upgrade.go:201
+github.com/spf13/cobra.(*Command).execute
+        github.com/spf13/cobra@v1.5.0/command.go:872
+github.com/spf13/cobra.(*Command).ExecuteC
+        github.com/spf13/cobra@v1.5.0/command.go:990
+github.com/spf13/cobra.(*Command).Execute
+        github.com/spf13/cobra@v1.5.0/command.go:918
+main.main
+        helm.sh/helm/v3/cmd/helm/helm.go:83
+runtime.main
+        runtime/proc.go:250
+runtime.goexit
+        runtime/asm_amd64.s:1571
+fernando@debian10x64:~$
+
+
+
+
+
+
+api:
+  image: fabricioveronez/pedelogo-catalogo:v1
+  serviceType: ClusterIP
+  ingress:
+  - aulakubedev.com.br
+  - api.aulakubedev.com.br
+
+mongodb:
+  auth:
+    usernames: mongouser
+    passwords: mongopwd
+    rootPassword: mongoRoot
+    databases: admin
+  persistence:
+    enabled: false
+
+
+
+
+api:
+  image: fabricioveronez/pedelogo-catalogo:v1
+  serviceType: ClusterIP
+  ingress:
+  - aulakubedev.com.br
+  - api.aulakubedev.com.br
+
+mongodb:
+  auth:
+    usernames: [mongouser]
+    passwords: [mongopwd]
+    rootPassword: mongoRoot
+    databases: [admin]
+  persistence:
+    enabled: false
+
+
+
+
+
+
+- Efetuando um Upgrade com dry-run para ver os resultados:
+
+helm upgrade minhaapi /home/fernando/cursos/helm-cursos/DevOps-Pro-Helm/009-Material-chart-novo/api-produto --dry-run --debug
+
+
+erro 2
+
+
+fernando@debian10x64:~$ ^C
+fernando@debian10x64:~$ helm upgrade minhaapi /home/fernando/cursos/helm-cursos/DevOps-Pro-Helm/009-Material-chart-novo/api-produto --dry-run --debug
+upgrade.go:142: [debug] preparing upgrade for minhaapi
+upgrade.go:524: [debug] copying values from minhaapi (v5) to new release.
+Error: UPGRADE FAILED: error validating "": error validating data: [ValidationError(Secret.data.Mongo__Password): invalid type for io.k8s.api.core.v1.Secret.data: got "array", expected "string", ValidationError(Secret.data.Mongo__User): invalid type for io.k8s.api.core.v1.Secret.data: got "array", expected "string"]
+helm.go:84: [debug] error validating "": error validating data: [ValidationError(Secret.data.Mongo__Password): invalid type for io.k8s.api.core.v1.Secret.data: got "array", expected "string", ValidationError(Secret.data.Mongo__User): invalid type for io.k8s.api.core.v1.Secret.data: got "array", expected "string"]
+helm.sh/helm/v3/pkg/kube.scrubValidationError
+        helm.sh/helm/v3/pkg/kube/client.go:643
+
+
+
+
+
+
+- NECESSÁRIO AJUSTAR O SECRET DO API, botar o pipe, base64, etc
+pegar exemplo:
+  MONGO_INITDB_ROOT_USERNAME: {{ .Values.mongodb.credentials.userName | b64enc | quote }}
+  MONGO_INITDB_ROOT_PASSWORD: {{ .Values.mongodb.credentials.userPassword | b64enc | quote }}
+
+
+
+
+DE:
+
+apiVersion: v1
+kind: Secret
+metadata:
+    name: {{ .Release.Name }}-api-secret
+data:
+    Mongo__User: {{ .Values.mongodb.auth.usernames }}
+    Mongo__Password: {{ .Values.mongodb.auth.passwords }}
+
+PARA:
+
+apiVersion: v1
+kind: Secret
+metadata:
+    name: {{ .Release.Name }}-api-secret
+data:
+    Mongo__User: {{ .Values.mongodb.auth.usernames | b64enc | quote }}
+    Mongo__Password: {{ .Values.mongodb.auth.passwords | b64enc | quote }}
+
+
+
+
+- Testando denovo
+
+helm upgrade minhaapi /home/fernando/cursos/helm-cursos/DevOps-Pro-Helm/009-Material-chart-novo/api-produto --dry-run --debug
+
+
+
+erro 3
+
+
+fernando@debian10x64:~$ helm upgrade minhaapi /home/fernando/cursos/helm-cursos/DevOps-Pro-Helm/009-Material-chart-novo/api-produto --dry-run --debug
+upgrade.go:142: [debug] preparing upgrade for minhaapi
+upgrade.go:524: [debug] copying values from minhaapi (v5) to new release.
+Error: UPGRADE FAILED: template: api-produto/templates/api-secret.yaml:6:53: executing "api-produto/templates/api-secret.yaml" at <b64enc>: wrong type for value; expected string; got []interface {}
+helm.go:84: [debug] template: api-produto/templates/api-secret.yaml:6:53: executing "api-produto/templates/api-secret.yaml" at <b64enc>: wrong type for value; expected string; got []interface {}
+UPGRADE FAILED
+main.newUpgradeCmd.func2
+        helm.sh/helm/v3/cmd/helm/upgrade.go:201
+github.com/spf13/cobra.(*Command).execute
+        github.com/spf13/cobra@v1.5.0/command.go:872
+github.com/spf13/cobra.(*Command).ExecuteC
+        github.com/spf13/cobra@v1.5.0/command.go:990
+github.com/spf13/cobra.(*Command).Execute
+        github.com/spf13/cobra@v1.5.0/command.go:918
+main.main
+        helm.sh/helm/v3/cmd/helm/helm.go:83
+runtime.main
+        runtime/proc.go:250
+runtime.goexit
+        runtime/asm_amd64.s:1571
+fernando@debian10x64:~$
+
+
+
+# PENDENTE
+
+- Video continua em 15:39
+- Tratar erros relacionados aos valores do Values.yaml. Documentação do Chart do Bitnami pede que eles sejam array. Porém colocando eles como array, impacta no campo do Mongo__User. 
+- Necessário analisar.
+- Ver também para documentar os comandos, adicionar estes abaixo:
+SEE ALSO
+    helm - The Helm package manager for Kubernetes.
+    helm dependency build - rebuild the charts/ directory based on the Chart.lock file
+    helm dependency list - list the dependencies for the given chart
+    helm dependency update - update charts/ based on the contents of Chart.yaml
+- Documentar melhor o "quote" e o "base64".
