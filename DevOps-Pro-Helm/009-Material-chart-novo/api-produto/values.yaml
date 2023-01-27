@@ -7,9 +7,9 @@ api:
 
 mongodb:
   auth:
-    usernames: [mongouser]
-    passwords: [mongopwd]
+    username: mongouser
+    password: mongopwd
     rootPassword: mongoRoot
-    databases: [admin]
+    database: admin
   persistence:
     enabled: false

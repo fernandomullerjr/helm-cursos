@@ -500,3 +500,189 @@ SEE ALSO
     helm dependency list - list the dependencies for the given chart
     helm dependency update - update charts/ based on the contents of Chart.yaml
 - Documentar melhor o "quote" e o "base64".
+
+
+
+
+
+
+
+
+DE:
+
+api:
+  image: fabricioveronez/pedelogo-catalogo:v1
+  serviceType: ClusterIP
+  ingress:
+  - aulakubedev.com.br
+  - api.aulakubedev.com.br
+
+mongodb:
+  auth:
+    usernames: [mongouser]
+    passwords: [mongopwd]
+    rootPassword: mongoRoot
+    databases: [admin]
+  persistence:
+    enabled: false
+
+
+
+PARA:
+
+api:
+  image: fabricioveronez/pedelogo-catalogo:v1
+  serviceType: ClusterIP
+  ingress:
+  - aulakubedev.com.br
+  - api.aulakubedev.com.br
+
+mongodb:
+  auth:
+    usernames: mongouser
+    passwords: mongopwd
+    rootPassword: mongoRoot
+    databases: admin
+  persistence:
+    enabled: false
+
+
+
+- Testando denovo
+
+helm upgrade minhaapi /home/fernando/cursos/helm-cursos/DevOps-Pro-Helm/009-Material-chart-novo/api-produto --dry-run --debug
+
+
+fernando@debian10x64:~$ helm upgrade minhaapi /home/fernando/cursos/helm-cursos/DevOps-Pro-Helm/009-Material-chart-novo/api-produto --dry-run --debug
+upgrade.go:142: [debug] preparing upgrade for minhaapi
+upgrade.go:524: [debug] copying values from minhaapi (v5) to new release.
+Error: UPGRADE FAILED: template: api-produto/charts/mongodb/templates/standalone/dep-sts.yaml:189:32: executing "api-produto/charts/mongodb/templates/standalone/dep-sts.yaml" at <include "mongodb.customUsers" .>: error calling include: template: api-produto/charts/mongodb/templates/_helpers.tpl:128:21: executing "mongodb.customUsers" at <.Values.auth.usernames>: range can't iterate over mongouser
+helm.go:84: [debug] template: api-produto/charts/mongodb/templates/standalone/dep-sts.yaml:189:32: executing "api-produto/charts/mongodb/templates/standalone/dep-sts.yaml" at <include "mongodb.customUsers" .>: error calling include: template: api-produto/charts/mongodb/templates/_helpers.tpl:128:21: executing "mongodb.customUsers" at <.Values.auth.usernames>: range can't iterate over mongouser
+UPGRADE FAILED
+main.newUpgradeCmd.func2
+        helm.sh/helm/v3/cmd/helm/upgrade.go:201
+github.com/spf13/cobra.(*Command).execute
+        github.com/spf13/cobra@v1.5.0/command.go:872
+github.com/spf13/cobra.(*Command).ExecuteC
+        github.com/spf13/cobra@v1.5.0/command.go:990
+github.com/spf13/cobra.(*Command).Execute
+        github.com/spf13/cobra@v1.5.0/command.go:918
+main.main
+        helm.sh/helm/v3/cmd/helm/helm.go:83
+runtime.main
+        runtime/proc.go:250
+runtime.goexit
+        runtime/asm_amd64.s:1571
+fernando@debian10x64:~$
+
+
+
+
+
+
+
+
+
+
+
+
+- Removidos os valores que eram array.
+- Usando os depreciados mesmo.
+<https://github.com/bitnami/charts/tree/main/bitnami/mongodb/>
+auth.username 	DEPRECATED: use auth.usernames instead 	""
+auth.password 	DEPRECATED: use auth.passwords instead 	""
+auth.database 	DEPRECATED: use auth.databases instead 	""
+
+- Ajustando o value do "databases" para "database" no singular, no manifesto do ConfigMap:
+
+/home/fernando/cursos/helm-cursos/DevOps-Pro-Helm/009-Material-chart-novo/api-produto/templates/api-configmap.yaml
+
+~~~~YAML
+apiVersion: v1
+kind: ConfigMap
+metadata:
+    name: {{ .Release.Name }}-api-configmap
+data:
+    Mongo__Host: {{ template "mongodb.serviceName" . }}
+    Mongo__DataBase: {{ .Values.mongodb.auth.database }}
+~~~~
+
+- No manifesto do Secret, passado para o singular o username e o password:
+
+~~~~YAML
+apiVersion: v1
+kind: Secret
+metadata:
+    name: {{ .Release.Name }}-api-secret
+data:
+    Mongo__User: {{ .Values.mongodb.auth.username | b64enc | quote }}
+    Mongo__Password: {{ .Values.mongodb.auth.password | b64enc | quote }}
+~~~~
+
+
+- Novo arquivo values:
+
+~~~~YAML
+api:
+  image: fabricioveronez/pedelogo-catalogo:v1
+  serviceType: ClusterIP
+  ingress:
+  - aulakubedev.com.br
+  - api.aulakubedev.com.br
+
+mongodb:
+  auth:
+    username: mongouser
+    password: mongopwd
+    rootPassword: mongoRoot
+    database: admin
+  persistence:
+    enabled: false
+~~~~
+
+
+
+
+- Testando denovo
+
+helm upgrade minhaapi /home/fernando/cursos/helm-cursos/DevOps-Pro-Helm/009-Material-chart-novo/api-produto --dry-run --debug
+
+dry-run completo:
+/home/fernando/cursos/helm-cursos/DevOps-Pro-Helm/009-dry-run-completo.yaml
+o chart da Bitnami cria Service Account também, e muito mais.
+
+- Agora funcionou!
+- Foi necessário deixar os campos do values no singular, sem ser array, pois o outro apresentava problema.
+
+
+
+
+
+- ANTES:
+
+~~~~bash
+fernando@debian10x64:~$ helm ls
+NAME            NAMESPACE       REVISION        UPDATED                                 STATUS          CHART                   APP VERSION
+minhaapi        default         5               2023-01-23 22:56:43.805941156 -0300 -03 deployed        api-produto-0.1.0       1.16.0
+fernando@debian10x64:~$
+fernando@debian10x64:~$ kubectl get pods
+NAME                                           READY   STATUS                       RESTARTS     AGE
+minhaapi-api-deployment-6d998c4f44-zbrbt       0/1     CreateContainerConfigError   3 (3d ago)   5d6h
+minhaapi-api-deployment-b957589b-czhg9         0/1     CreateContainerConfigError   0            3d
+minhaapi-mongodb-deployment-768fc9bd8f-wfb5l   0/1     CreateContainerConfigError   0            3d
+minhaapi-mongodb-deployment-85d944c57d-8flk4   0/1     CreateContainerConfigError   4 (3d ago)   5d6h
+fernando@debian10x64:~$
+~~~~
+
+
+
+- Agora fazer um teste real:
+
+helm upgrade minhaapi /home/fernando/cursos/helm-cursos/DevOps-Pro-Helm/009-Material-chart-novo/api-produto
+
+deu erro
+
+
+fernando@debian10x64:~$ helm upgrade minhaapi /home/fernando/cursos/helm-cursos/DevOps-Pro-Helm/009-Material-chart-novo/api-produto
+Error: UPGRADE FAILED: no Service with the name "minhaapi-mongodb" found
+fernando@debian10x64:~$
