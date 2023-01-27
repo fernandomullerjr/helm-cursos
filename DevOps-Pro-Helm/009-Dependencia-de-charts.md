@@ -686,3 +686,11 @@ deu erro
 fernando@debian10x64:~$ helm upgrade minhaapi /home/fernando/cursos/helm-cursos/DevOps-Pro-Helm/009-Material-chart-novo/api-produto
 Error: UPGRADE FAILED: no Service with the name "minhaapi-mongodb" found
 fernando@debian10x64:~$
+
+
+
+
+
+
+# PENDENTE
+- Tratar erro sobre o name do Service.
