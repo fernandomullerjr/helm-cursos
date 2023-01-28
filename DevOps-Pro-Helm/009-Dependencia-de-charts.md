@@ -842,3 +842,85 @@ replicaset.apps/minhaapi-api-deployment-b957589b     0         0         0      
 replicaset.apps/minhaapi-mongodb-6c98c75fcc          1         1         1       5m12s
 fernando@debian10x64:~$
 ~~~~
+
+
+
+
+
+
+minikube service minhaapi-api-service
+
+fernando@debian10x64:~$ minikube service minhaapi-api-service
+|-----------|----------------------|-------------|--------------|
+| NAMESPACE |         NAME         | TARGET PORT |     URL      |
+|-----------|----------------------|-------------|--------------|
+| default   | minhaapi-api-service |             | No node port |
+|-----------|----------------------|-------------|--------------|
+* service default/minhaapi-api-service has no node port
+fernando@debian10x64:~$
+
+
+
+NodePort
+
+helm upgrade minhaapi /home/fernando/cursos/helm-cursos/DevOps-Pro-Helm/009-Material-chart-novo/api-produto
+
+
+fernando@debian10x64:~$ helm upgrade minhaapi /home/fernando/cursos/helm-cursos/DevOps-Pro-Helm/009-Material-chart-novo/api-produto
+Release "minhaapi" has been upgraded. Happy Helming!
+NAME: minhaapi
+LAST DEPLOYED: Sat Jan 28 17:30:06 2023
+NAMESPACE: default
+STATUS: deployed
+REVISION: 9
+TEST SUITE: None
+NOTES:
+Instalado
+fernando@debian10x64:~$
+
+
+
+fernando@debian10x64:~$ kubectl get all
+NAME                                           READY   STATUS    RESTARTS   AGE
+pod/minhaapi-api-deployment-6586d4f7bc-6vcsx   1/1     Running   0          20m
+pod/minhaapi-mongodb-6c98c75fcc-lnq5l          1/1     Running   0          20m
+
+NAME                           TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)        AGE
+service/kubernetes             ClusterIP   10.96.0.1        <none>        443/TCP        27d
+service/minhaapi-api-service   NodePort    10.104.23.138    <none>        80:32182/TCP   14d
+service/minhaapi-mongodb       ClusterIP   10.100.148.239   <none>        27017/TCP      42h
+
+NAME                                      READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/minhaapi-api-deployment   1/1     1            1           14d
+deployment.apps/minhaapi-mongodb          1/1     1            1           20m
+
+NAME                                                 DESIRED   CURRENT   READY   AGE
+replicaset.apps/minhaapi-api-deployment-6586d4f7bc   1         1         1       20m
+replicaset.apps/minhaapi-api-deployment-6d998c4f44   0         0         0       7d
+replicaset.apps/minhaapi-api-deployment-8686474859   0         0         0       14d
+replicaset.apps/minhaapi-api-deployment-b957589b     0         0         0       4d18h
+replicaset.apps/minhaapi-mongodb-6c98c75fcc          1         1         1       20m
+fernando@debian10x64:~$
+
+
+
+
+
+fernando@debian10x64:~$
+fernando@debian10x64:~$ minikube service minhaapi-api-service
+|-----------|----------------------|-------------|---------------------------|
+| NAMESPACE |         NAME         | TARGET PORT |            URL            |
+|-----------|----------------------|-------------|---------------------------|
+| default   | minhaapi-api-service |          80 | http://192.168.49.2:32182 |
+|-----------|----------------------|-------------|---------------------------|
+* Opening service default/minhaapi-api-service in default browser...
+fernando@debian10x64:~$
+
+
+
+
+- Acessível via:
+http://192.168.49.2:32182/swagger
+
+- Testes OK
+200

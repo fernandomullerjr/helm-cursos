@@ -1,6 +1,6 @@
 api:
   image: fabricioveronez/pedelogo-catalogo:v1
-  serviceType: ClusterIP
+  serviceType: NodePort
   ingress:
   - aulakubedev.com.br
   - api.aulakubedev.com.br
