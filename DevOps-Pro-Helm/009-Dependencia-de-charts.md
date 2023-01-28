@@ -694,3 +694,151 @@ fernando@debian10x64:~$
 
 # PENDENTE
 - Tratar erro sobre o name do Service.
+
+06:22
+fala sobre o service desse projeto
+
+
+
+DE:
+
+~~~~YAML
+dependencies:
+- name: mongodb
+  version: "13.6.4"
+  repository: "https://charts.bitnami.com/bitnami"
+~~~~
+
+PARA:
+
+~~~~YAML
+dependencies:
+- name: mongodb
+  version: "9.2.5"
+  repository: "https://charts.bitnami.com/bitnami"
+~~~~
+
+
+- Efetuando novo teste, após trocar a versão do MongoDB, deixando igual do video do Veronez:
+
+helm dependency build /home/fernando/cursos/helm-cursos/DevOps-Pro-Helm/009-Material-chart-novo/api-produto/
+
+~~~~bash
+fernando@debian10x64:~$ helm dependency build /home/fernando/cursos/helm-cursos/DevOps-Pro-Helm/009-Material-chart-novo/api-produto/
+Error: no repository definition for https://charts.bitnami.com/bitnami. Please add the missing repos via 'helm repo add'
+fernando@debian10x64:~$ ^C
+~~~~
+
+
+- Adicionando o repo do Bitnami na listagem do Helm:
+
+~~~~bash
+https://github.com/bitnami/charts/tree/main/bitnami/mongodb/
+<https://github.com/bitnami/charts/tree/main/bitnami/mongodb/>
+$ helm repo add my-repo https://charts.bitnami.com/bitnami
+$ helm install my-release my-repo/mongodb
+~~~~
+
+~~~~bash
+fernando@debian10x64:~$ helm repo add my-repo https://charts.bitnami.com/bitnami
+"my-repo" has been added to your repositories
+fernando@debian10x64:~$
+fernando@debian10x64:~$
+~~~~
+
+
+- Testando o build das dependencias novamente:
+
+~~~~bash
+fernando@debian10x64:~$ helm dependency build /home/fernando/cursos/helm-cursos/DevOps-Pro-Helm/009-Material-chart-novo/api-produto/
+Hang tight while we grab the latest from your chart repositories...
+...Successfully got an update from the "ingress-nginx" chart repository
+...Successfully got an update from the "my-repo" chart repository
+...Successfully got an update from the "stable" chart repository
+Update Complete. ⎈Happy Helming!⎈
+Saving 1 charts
+Downloading mongodb from repo https://charts.bitnami.com/bitnami
+Deleting outdated charts
+fernando@debian10x64:~$
+~~~~
+
+
+
+
+- Agora fazer um teste real:
+
+helm upgrade minhaapi /home/fernando/cursos/helm-cursos/DevOps-Pro-Helm/009-Material-chart-novo/api-produto
+
+~~~~bash
+fernando@debian10x64:~$ helm upgrade minhaapi /home/fernando/cursos/helm-cursos/DevOps-Pro-Helm/009-Material-chart-novo/api-produto
+Error: UPGRADE FAILED: cannot patch "minhaapi-mongodb" with kind Service: Service "minhaapi-mongodb" is invalid: metadata.resourceVersion: Invalid value: "": must be specified for an update
+fernando@debian10x64:~$
+~~~~
+
+Falha ao tentar fazer um patch num Service com nome "minhaapi-mongodb"
+
+
+
+
+
+
+- Deletado o arquivo "mongodb-service.yaml" da pasta "DevOps-Pro-Helm/009-Material-chart-novo/api-produto/templates"
+mongodb-service.yaml
+DevOps-Pro-Helm/009-Material-chart-novo/api-produto/templates
+efetuado backup dele na pasta:
+/home/fernando/cursos/helm-cursos/outros/bkp-teste/mongodb-service.yaml
+
+
+- Agora fazer um teste real:
+
+helm upgrade minhaapi /home/fernando/cursos/helm-cursos/DevOps-Pro-Helm/009-Material-chart-novo/api-produto
+
+
+- Funcionou:
+
+~~~~bash
+fernando@debian10x64:~$ helm upgrade minhaapi /home/fernando/cursos/helm-cursos/DevOps-Pro-Helm/009-Material-chart-novo/api-produto
+Release "minhaapi" has been upgraded. Happy Helming!
+NAME: minhaapi
+LAST DEPLOYED: Sat Jan 28 17:14:06 2023
+NAMESPACE: default
+STATUS: deployed
+REVISION: 8
+TEST SUITE: None
+NOTES:
+Instalado
+fernando@debian10x64:~$
+
+fernando@debian10x64:~$ helm ls
+NAME            NAMESPACE       REVISION        UPDATED                                 STATUS          CHART                   APP VERSION
+minhaapi        default         8               2023-01-28 17:14:06.002515107 -0300 -03 deployed        api-produto-0.1.0       1.16.0
+fernando@debian10x64:~$
+fernando@debian10x64:~$
+fernando@debian10x64:~$ kubectl get pods
+NAME                                       READY   STATUS    RESTARTS   AGE
+minhaapi-api-deployment-6586d4f7bc-6vcsx   1/1     Running   0          5m6s
+minhaapi-mongodb-6c98c75fcc-lnq5l          1/1     Running   0          5m7s
+fernando@debian10x64:~$
+fernando@debian10x64:~$
+fernando@debian10x64:~$ kubectl get all
+NAME                                           READY   STATUS    RESTARTS   AGE
+pod/minhaapi-api-deployment-6586d4f7bc-6vcsx   1/1     Running   0          5m11s
+pod/minhaapi-mongodb-6c98c75fcc-lnq5l          1/1     Running   0          5m12s
+
+NAME                           TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)     AGE
+service/kubernetes             ClusterIP   10.96.0.1        <none>        443/TCP     27d
+service/minhaapi-api-service   ClusterIP   10.104.23.138    <none>        80/TCP      14d
+service/minhaapi-mongodb       ClusterIP   10.100.148.239   <none>        27017/TCP   41h
+
+NAME                                      READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/minhaapi-api-deployment   1/1     1            1           14d
+deployment.apps/minhaapi-mongodb          1/1     1            1           5m12s
+
+NAME                                                 DESIRED   CURRENT   READY   AGE
+replicaset.apps/minhaapi-api-deployment-6586d4f7bc   1         1         1       5m12s
+replicaset.apps/minhaapi-api-deployment-6d998c4f44   0         0         0       7d
+replicaset.apps/minhaapi-api-deployment-8686474859   0         0         0       14d
+replicaset.apps/minhaapi-api-deployment-b957589b     0         0         0       4d18h
+replicaset.apps/minhaapi-mongodb-6c98c75fcc          1         1         1       5m12s
+fernando@debian10x64:~$
+~~~~
